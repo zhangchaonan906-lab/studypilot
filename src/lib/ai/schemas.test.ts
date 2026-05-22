@@ -1,0 +1,139 @@
+import { describe, expect, it } from "vitest";
+import {
+  calculatePlanDays,
+  generatedPlanSchema,
+  validateGeneratePlanRequest,
+  validateGeneratedPlan,
+} from "./schemas";
+
+describe("generate plan request validation", () => {
+  it("accepts a valid request and calculates capped plan days", () => {
+    const currentDate = new Date(2026, 4, 23);
+    const result = validateGeneratePlanRequest(
+      {
+        title: "高数期末冲刺",
+        goal: "复习积分和导数应用",
+        currentLevel: "基础薄弱",
+        deadline: "2026-06-30",
+        dailyMinutes: 90,
+        restDaysPerWeek: 1,
+        preference: "多做题",
+      },
+      currentDate
+    );
+
+    expect(result.success).toBe(true);
+    expect(calculatePlanDays("2026-06-30", currentDate)).toBe(39);
+  });
+
+  it("rejects invalid request fields with Chinese messages", () => {
+    const currentDate = new Date(2026, 4, 23);
+
+    expect(
+      validateGeneratePlanRequest(
+        {
+          title: "",
+          goal: "",
+          deadline: "2026-05-22",
+          dailyMinutes: 10,
+          restDaysPerWeek: 7,
+        },
+        currentDate
+      ).success
+    ).toBe(false);
+  });
+
+  it("caps generated days at 90", () => {
+    expect(calculatePlanDays("2026-12-31", new Date(2026, 4, 23))).toBe(90);
+  });
+});
+
+describe("generated plan schema", () => {
+  const generatedPlan = {
+    title: "高数 30 天计划",
+    overview: "每天完成重点知识、练习和复盘。",
+    days: [
+      {
+        dayIndex: 1,
+        date: "2026-05-23",
+        title: "极限基础诊断",
+        summary: "完成极限薄弱点排查。",
+        reviewMethod: "用 10 分钟主动回忆公式和典型错误。",
+        tasks: [
+          {
+            content: "完成 8 道极限计算题并标记错因",
+            priority: "must",
+            estimatedMinutes: 35,
+          },
+          {
+            content: "整理 3 条等价无穷小使用条件",
+            priority: "should",
+            estimatedMinutes: 20,
+          },
+        ],
+        resources: [
+          {
+            title: "极限等价无穷小讲解",
+            type: "search_keyword",
+            description: "搜索课程讲义和例题讲解，不使用具体 URL。",
+            searchKeywords: "高等数学 等价无穷小 极限 例题",
+          },
+        ],
+      },
+    ],
+  };
+
+  it("validates strict generated JSON shape", () => {
+    expect(generatedPlanSchema.safeParse(generatedPlan).success).toBe(true);
+  });
+
+  it("rejects invalid priorities and too few tasks", () => {
+    const invalid = {
+      ...generatedPlan,
+      days: [
+        {
+          ...generatedPlan.days[0],
+          tasks: [
+            {
+              content: "认真学习",
+              priority: "urgent",
+              estimatedMinutes: 30,
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(generatedPlanSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it("rejects task totals that exceed daily minutes", () => {
+    const result = validateGeneratedPlan(
+      generatedPlanSchema.parse({
+        ...generatedPlan,
+        days: [
+          {
+            ...generatedPlan.days[0],
+            tasks: [
+              ...generatedPlan.days[0].tasks,
+              {
+                content: "完成 20 道综合题并复盘",
+                priority: "optional",
+                estimatedMinutes: 80,
+              },
+            ],
+          },
+        ],
+      }),
+      {
+        startDate: "2026-05-23",
+        deadline: "2026-05-25",
+        dailyMinutes: 90,
+        maxDays: 3,
+      }
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("超过每天可学习时间");
+  });
+});
