@@ -63,7 +63,12 @@ export async function createMistakeReviewAction(formData: FormData) {
     redirect(`/review?error=${encodeURIComponent(parsed.error)}`);
   }
 
-  await createMistakeReview(parsed.data);
+  try {
+    await createMistakeReview(parsed.data);
+  } catch {
+    redirect(`/review?error=${encodeURIComponent("错题保存失败，请稍后重试。")}`);
+  }
+
   revalidatePath("/review");
   revalidatePath("/dashboard");
   redirect("/review?created=1");
@@ -76,7 +81,12 @@ export async function saveDailyReflectionAction(formData: FormData) {
     redirect(`/today?error=${encodeURIComponent(parsed.error)}`);
   }
 
-  await upsertDailyReflection(parsed.data);
+  try {
+    await upsertDailyReflection(parsed.data);
+  } catch {
+    redirect(`/today?error=${encodeURIComponent("复盘保存失败，请稍后重试。")}`);
+  }
+
   revalidatePath("/today");
   revalidatePath("/dashboard");
   redirect("/today?saved=1");

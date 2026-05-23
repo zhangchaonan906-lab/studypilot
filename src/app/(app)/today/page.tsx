@@ -14,7 +14,7 @@ export default async function TodayPage({
   const params = await searchParams;
   const today = await getTodayStudyDay();
   const message = params.saved
-    ? "今日复盘已保存。"
+    ? "复盘已保存。"
     : params.error
       ? decodeURIComponent(params.error)
       : undefined;

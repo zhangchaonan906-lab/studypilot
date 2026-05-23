@@ -1,6 +1,7 @@
 import { EmptyState } from "@/components/EmptyState";
 import { MistakeReviewForm } from "@/components/MistakeReviewForm";
 import { PageHeader } from "@/components/PageHeader";
+import { SuccessMessage } from "@/components/StatusMessage";
 import { getReviewPageData } from "@/lib/study/data";
 
 export const dynamic = "force-dynamic";
@@ -25,9 +26,9 @@ export default async function ReviewPage({
       <section className="grid gap-5 xl:grid-cols-[1fr_360px]">
         <div className="space-y-4">
           {params.created ? (
-            <p className="rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800">
+            <SuccessMessage>
               错题已保存。
-            </p>
+            </SuccessMessage>
           ) : null}
           {mistakes.length === 0 ? (
             <EmptyState

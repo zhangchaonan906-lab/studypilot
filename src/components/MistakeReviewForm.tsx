@@ -1,6 +1,8 @@
 import type { Plan, TodayTask } from "@/lib/study/types";
 import { createMistakeReviewAction } from "@/lib/study/actions";
 import { getLocalDateString } from "@/lib/study/forms";
+import { ErrorMessage } from "./StatusMessage";
+import { SubmitButton } from "./SubmitButton";
 
 export function MistakeReviewForm({
   plan,
@@ -15,7 +17,9 @@ export function MistakeReviewForm({
     <aside className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
       <h2 className="text-lg font-bold text-ink">新增错题</h2>
       {error ? (
-        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <div className="mt-3">
+          <ErrorMessage>{error}</ErrorMessage>
+        </div>
       ) : null}
       {!plan ? (
         <p className="mt-4 text-sm leading-6 text-slate-500">
@@ -67,12 +71,9 @@ export function MistakeReviewForm({
             placeholder="下一步行动"
             className="w-full resize-none rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-blue-100"
           />
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-          >
+          <SubmitButton pendingLabel="保存中...">
             保存错题
-          </button>
+          </SubmitButton>
         </form>
       )}
     </aside>

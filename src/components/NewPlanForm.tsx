@@ -2,28 +2,43 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ProgressLoadingCard } from "./ProgressLoadingCard";
+import {
+  getLoadingProgressState,
+  getSubmitButtonState,
+  planGenerationProgressSteps,
+  type LoadingStatus,
+} from "@/lib/ui/loading-state";
 
 const preferences = ["每天短时高频", "周末集中学习", "多做题", "多看讲解", "需要复盘提醒"];
-const loadingSteps = [
-  "AI 正在分析你的学习目标...",
-  "正在拆解每日任务...",
-  "正在生成资料建议...",
-  "正在保存学习计划...",
-];
 const publicBetaMaxDays = 30;
 
 export function NewPlanForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
+  const [status, setStatus] = useState<LoadingStatus>("idle");
   const [selectedDeadline, setSelectedDeadline] = useState("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const loadingStepIndex = Math.min(Math.floor(elapsedSeconds / 15), loadingSteps.length - 1);
+  const isBusy = status === "loading" || status === "success";
+  const progressState = getLoadingProgressState({
+    elapsedSeconds,
+    status,
+    steps: planGenerationProgressSteps,
+    timeoutSeconds: 60,
+    timeoutMessage: "仍在生成中，复杂计划可能需要更久，请稍等。",
+    successLabel: "生成完成，正在跳转...",
+  });
+  const submitButton = getSubmitButtonState({
+    status,
+    idleLabel: "生成学习计划",
+    loadingLabel: "生成中...",
+    successLabel: "生成完成",
+  });
   const planDays = getInclusiveDaysUntil(selectedDeadline);
   const shouldShowPublicBetaLimit = planDays > publicBetaMaxDays;
 
   useEffect(() => {
-    if (!isPending) {
+    if (status !== "loading") {
       return;
     }
 
@@ -32,17 +47,17 @@ export function NewPlanForm() {
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [isPending]);
+  }, [status]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isPending) {
+    if (isBusy) {
       return;
     }
 
     setError(null);
-    setIsPending(true);
+    setStatus("loading");
     setElapsedSeconds(0);
 
     const formData = new FormData(event.currentTarget);
@@ -73,24 +88,28 @@ export function NewPlanForm() {
         }
 
         setError(result?.error || "生成学习计划失败，请稍后重试。");
+        setStatus("error");
         return;
       }
 
       if (!result?.planId) {
         setError("生成成功但没有返回计划 ID，请刷新后查看学习台。");
+        setStatus("error");
         return;
       }
 
-      router.push(`/plans/${result.planId}`);
-      router.refresh();
+      setStatus("success");
+      window.setTimeout(() => {
+        router.push(`/plans/${result.planId}`);
+        router.refresh();
+      }, 350);
     } catch (generateError) {
       setError(
         generateError instanceof Error
           ? generateError.message
           : "生成学习计划失败，请稍后重试。"
       );
-    } finally {
-      setIsPending(false);
+      setStatus("error");
     }
   }
 
@@ -183,36 +202,23 @@ export function NewPlanForm() {
           提交后会在服务端调用 AI，并把计划、每日安排、任务和资料建议保存到 Supabase。生成学习计划通常需要 20-60 秒，请不要关闭页面。
         </div>
 
-        {isPending ? (
-          <div
-            role="status"
-            aria-live="polite"
-            className="rounded-lg bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900"
-          >
-            <p className="font-semibold">{loadingSteps[loadingStepIndex]}</p>
-            <p className="mt-1 text-blue-800">
-              生成学习计划通常需要 20-60 秒，请不要关闭页面。
-            </p>
-            {elapsedSeconds >= 60 ? (
-              <p className="mt-2 rounded-md bg-white/70 px-3 py-2 text-blue-900">
-                仍在生成中，复杂计划可能需要更久，请稍等。
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-
-        {error ? (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm leading-6 text-red-700">
-            生成失败：{error}
-          </p>
+        {status !== "idle" ? (
+          <ProgressLoadingCard
+            title="学习计划生成进度"
+            progress={progressState.progress}
+            label={progressState.label}
+            hint="生成学习计划通常需要 20-60 秒，请不要关闭页面。"
+            timeoutMessage={progressState.timeoutMessage}
+            error={error ? `生成失败：${error}` : null}
+          />
         ) : null}
 
         <button
           type="submit"
-          disabled={isPending}
+          disabled={submitButton.disabled}
           className="w-full rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-fit"
         >
-          {isPending ? "正在生成，请稍等..." : "生成学习计划"}
+          {submitButton.label}
         </button>
       </form>
     </section>

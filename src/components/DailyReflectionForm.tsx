@@ -1,6 +1,8 @@
 import type { DailyReflection, Plan } from "@/lib/study/types";
 import { saveDailyReflectionAction } from "@/lib/study/actions";
 import { getLocalDateString } from "@/lib/study/forms";
+import { ErrorMessage, SuccessMessage } from "./StatusMessage";
+import { SubmitButton } from "./SubmitButton";
 
 export function DailyReflectionForm({
   plans,
@@ -13,16 +15,17 @@ export function DailyReflectionForm({
   message?: string;
   messageType?: "success" | "error";
 }) {
-  const messageClass =
-    messageType === "error"
-      ? "bg-red-50 text-red-700"
-      : "bg-blue-50 text-blue-800";
-
   return (
     <aside className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
       <h2 className="text-lg font-bold text-ink">今日复盘</h2>
       {message ? (
-        <p className={`mt-3 rounded-lg px-3 py-2 text-sm ${messageClass}`}>{message}</p>
+        <div className="mt-3">
+          {messageType === "error" ? (
+            <ErrorMessage>{message}</ErrorMessage>
+          ) : (
+            <SuccessMessage>{message}</SuccessMessage>
+          )}
+        </div>
       ) : null}
       {reflection ? (
         <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
@@ -84,12 +87,9 @@ export function DailyReflectionForm({
               className="mt-2 w-full resize-none rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-blue-100"
             />
           </label>
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-          >
+          <SubmitButton pendingLabel="保存中...">
             保存复盘
-          </button>
+          </SubmitButton>
         </form>
       )}
     </aside>
