@@ -10,7 +10,13 @@ import { getDashboardData } from "@/lib/study/data";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const showDeletedMessage = params.deleted === "1";
   const dashboard = await getDashboardData();
   const estimatedMinutes = dashboard.todayTasks.reduce(
     (total, task) => total + (task.estimated_minutes ?? 0),
@@ -50,6 +56,12 @@ export default async function DashboardPage() {
         title="欢迎回来，今天继续稳稳推进"
         description="这里汇总当前计划、今日任务、复盘和错题情况，帮你快速进入学习状态。"
       />
+
+      {showDeletedMessage ? (
+        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-sm font-semibold text-emerald-700">学习计划已删除。</p>
+        </div>
+      ) : null}
 
       {!dashboard.currentPlan ? (
         <EmptyState

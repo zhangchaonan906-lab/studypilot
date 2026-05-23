@@ -21,12 +21,10 @@ export function DeletePlanButton({
   const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleOpenConfirm() {
     setError(null);
-    setSuccess(null);
     setIsConfirming(true);
   }
 
@@ -41,7 +39,6 @@ export function DeletePlanButton({
 
   function handleDelete() {
     setError(null);
-    setSuccess(null);
 
     startTransition(async () => {
       const result = await deletePlanAction(planId, redirectAfterDelete);
@@ -52,8 +49,7 @@ export function DeletePlanButton({
       }
 
       setIsConfirming(false);
-      setSuccess(result?.success ?? "学习计划已删除。");
-      router.refresh();
+      router.replace("/dashboard?deleted=1");
     });
   }
 
@@ -95,7 +91,6 @@ export function DeletePlanButton({
           {error ? <p className="mt-3 text-sm font-semibold text-red-700">{error}</p> : null}
         </div>
       )}
-      {success ? <p className="mt-2 text-sm font-semibold text-emerald-700">{success}</p> : null}
     </div>
   );
 }

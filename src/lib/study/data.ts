@@ -10,6 +10,11 @@ import {
   getPlanWeekIndex,
 } from "./metrics";
 import { deletePlanForUser } from "./plan-deletion";
+import {
+  createTaskForUser,
+  deleteTaskForUser,
+  updateTaskForUser,
+} from "./task-management";
 import { updateTaskCompletionForUser } from "./task-completion";
 import type {
   DashboardData,
@@ -318,6 +323,45 @@ export async function getTodayStudyDay(
 export async function updateTaskCompletion(taskId: string, isCompleted: boolean) {
   const { supabase, userId } = await getAuthenticatedContext();
   await updateTaskCompletionForUser(supabase, userId, taskId, isCompleted);
+}
+
+export async function updateTask(
+  taskId: string,
+  fields: {
+    content?: string;
+    estimated_minutes?: number;
+    priority?: "must" | "should" | "optional";
+  },
+) {
+  const { supabase, userId } = await getAuthenticatedContext();
+  return updateTaskForUser(supabase, userId, taskId, fields);
+}
+
+export async function createTask(
+  planDayId: string,
+  fields: {
+    content: string;
+    estimated_minutes?: number;
+    priority: "must" | "should" | "optional";
+  },
+) {
+  const { supabase, userId } = await getAuthenticatedContext();
+
+  const { error } = await supabase
+    .from("plan_days")
+    .select("id")
+    .eq("id", planDayId)
+    .eq("user_id", userId)
+    .single();
+
+  throwIfError(error, "无权访问该学习日");
+
+  return createTaskForUser(supabase, userId, planDayId, fields);
+}
+
+export async function deleteTask(taskId: string) {
+  const { supabase, userId } = await getAuthenticatedContext();
+  return deleteTaskForUser(supabase, userId, taskId);
 }
 
 export async function listMistakeReviews() {

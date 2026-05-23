@@ -5,18 +5,12 @@ import { DeletePlanButton } from "@/components/DeletePlanButton";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { ProgressBar } from "@/components/ProgressBar";
+import { CreateTaskForm } from "@/components/CreateTaskForm";
 import { ResourceSearchLinks } from "@/components/ResourceSearchLinks";
-import { TaskCompletionToggle } from "@/components/TaskCompletionToggle";
+import { TaskCard } from "@/components/TaskCard";
 import { getPlanDetail } from "@/lib/study/data";
-import type { TaskPriority } from "@/lib/study/types";
 
 export const dynamic = "force-dynamic";
-
-const priorityMeta: Record<TaskPriority, { label: string; tone: "blue" | "amber" | "slate" }> = {
-  must: { label: "必做", tone: "amber" },
-  should: { label: "建议", tone: "blue" },
-  optional: { label: "可选", tone: "slate" },
-};
 
 export default async function PlanDetailPage({
   params,
@@ -124,28 +118,14 @@ export default async function PlanDetailPage({
                       </p>
                     ) : (
                       <ul className="mt-3 space-y-2">
-                        {day.tasks.map((task) => {
-                          const priority = priorityMeta[task.priority];
-
-                          return (
-                            <li key={task.id}>
-                              <div className="rounded-2xl bg-slate-50 p-2">
-                                <div className="mb-2 flex justify-end">
-                                  <Badge tone={priority.tone}>{priority.label}</Badge>
-                                </div>
-                                <TaskCompletionToggle
-                                  taskId={task.id}
-                                  initialCompleted={task.is_completed}
-                                  content={task.content}
-                                  meta={`${task.estimated_minutes ?? 0} 分钟`}
-                                  variant="compact"
-                                />
-                              </div>
-                            </li>
-                          );
-                        })}
+                        {day.tasks.map((task) => (
+                          <li key={task.id}>
+                            <TaskCard task={task} planId={plan.id} />
+                          </li>
+                        ))}
                       </ul>
                     )}
+                    <CreateTaskForm planDayId={day.id} planId={plan.id} />
                   </div>
 
                   <aside className="space-y-4">

@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import {
   createMistakeReview,
   createPlan,
+  createTask,
   deletePlan,
+  deleteTask,
+  updateTask,
   updateTaskCompletion,
   upsertDailyReflection,
 } from "./data";
@@ -55,6 +58,67 @@ export async function updateTaskCompletionAction(taskId: string, isCompleted: bo
     return { success: isCompleted ? "任务已完成。" : "已取消完成。" };
   } catch {
     return { error: "任务状态更新失败，请稍后重试。" };
+  }
+}
+
+export async function updateTaskAction(
+  taskId: string,
+  planId: string,
+  fields: {
+    content?: string;
+    estimated_minutes?: number;
+    priority?: "must" | "should" | "optional";
+  },
+) {
+  try {
+    await updateTask(taskId, fields);
+    revalidatePath(`/plans/${planId}`);
+    revalidatePath("/dashboard");
+    revalidatePath("/today");
+
+    return { success: "任务已更新。" };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "任务更新失败，请稍后重试。",
+    };
+  }
+}
+
+export async function createTaskAction(
+  planDayId: string,
+  planId: string,
+  fields: {
+    content: string;
+    estimated_minutes?: number;
+    priority: "must" | "should" | "optional";
+  },
+) {
+  try {
+    await createTask(planDayId, fields);
+    revalidatePath(`/plans/${planId}`);
+    revalidatePath("/dashboard");
+    revalidatePath("/today");
+
+    return { success: "任务已创建。" };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "任务创建失败，请稍后重试。",
+    };
+  }
+}
+
+export async function deleteTaskAction(taskId: string, planId: string) {
+  try {
+    await deleteTask(taskId);
+    revalidatePath(`/plans/${planId}`);
+    revalidatePath("/dashboard");
+    revalidatePath("/today");
+
+    return { success: "任务已删除。" };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "任务删除失败，请稍后重试。",
+    };
   }
 }
 
