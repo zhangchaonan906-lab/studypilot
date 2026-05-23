@@ -4,6 +4,7 @@ import { FormEvent, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatAuthError } from "@/lib/auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { ErrorMessage, SuccessMessage } from "./StatusMessage";
 
 type AuthMode = "sign-in" | "sign-up";
 type AuthErrorState = {
@@ -84,18 +85,20 @@ export function LoginForm({ initialMessage }: { initialMessage?: string }) {
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+    <section className="sp-card-soft">
       <p className="text-sm font-semibold text-primary">账号登录</p>
-      <h1 className="mt-2 text-2xl font-bold text-ink">欢迎来到 StudyPilot</h1>
-      <p className="mt-2 text-sm leading-6 text-slate-600">
+      <h1 className="mt-2 break-words text-2xl font-bold text-ink sm:text-3xl">
+        欢迎来到 StudyPilot
+      </h1>
+      <p className="mt-3 text-sm leading-6 text-slate-600">
         使用邮箱注册或登录，进入你的学习台。
       </p>
 
-      <div className="mt-6 grid grid-cols-2 rounded-lg bg-slate-100 p-1">
+      <div className="mt-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1">
         <button
           type="button"
           onClick={() => setMode("sign-in")}
-          className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
+          className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
             mode === "sign-in" ? "bg-white text-primary shadow-sm" : "text-slate-600"
           }`}
         >
@@ -104,7 +107,7 @@ export function LoginForm({ initialMessage }: { initialMessage?: string }) {
         <button
           type="button"
           onClick={() => setMode("sign-up")}
-          className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
+          className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
             mode === "sign-up" ? "bg-white text-primary shadow-sm" : "text-slate-600"
           }`}
         >
@@ -114,44 +117,42 @@ export function LoginForm({ initialMessage }: { initialMessage?: string }) {
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">邮箱</span>
+          <span className="sp-label">邮箱</span>
           <input
             name="email"
             type="email"
             autoComplete="email"
             placeholder="name@university.edu"
-            className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-blue-100"
+            className="sp-input"
           />
         </label>
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">密码</span>
+          <span className="sp-label">密码</span>
           <input
             name="password"
             type="password"
             autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
             placeholder="至少 6 位密码"
-            className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-blue-100"
+            className="sp-input"
           />
         </label>
 
         {error ? (
-          <div className="rounded-lg bg-red-50 px-3 py-2 text-sm leading-6 text-red-700">
+          <ErrorMessage>
             <p>{error.message}</p>
             <p className="mt-1 break-words text-xs text-red-600">
               Supabase 原始错误：{error.rawMessage}
             </p>
-          </div>
+          </ErrorMessage>
         ) : null}
         {notice ? (
-          <p className="rounded-lg bg-blue-50 px-3 py-2 text-sm leading-6 text-blue-800">
-            {notice}
-          </p>
+          <SuccessMessage>{notice}</SuccessMessage>
         ) : null}
 
         <button
           type="submit"
           disabled={isPending}
-          className="w-full rounded-lg bg-primary px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+          className="btn-primary w-full"
         >
           {isPending ? "处理中..." : mode === "sign-in" ? "登录并进入学习台" : "注册账号"}
         </button>

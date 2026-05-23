@@ -47,13 +47,13 @@ export function TaskCompletionToggle({
       : "未完成 · 点击打卡";
   const rootClass =
     variant === "compact"
-      ? "rounded-lg bg-white"
+      ? "rounded-xl bg-white"
       : isCompleted
-        ? "rounded-lg border border-emerald-100 bg-emerald-50/70 p-4"
-        : "rounded-lg border border-slate-100 bg-slate-50 p-4 hover:border-blue-200 hover:bg-blue-50/40";
+        ? "rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4"
+        : "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:border-blue-200 hover:bg-blue-50/30";
   const buttonClass =
     variant === "compact"
-      ? "flex w-full flex-col gap-3 rounded-lg px-3 py-2 text-left transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-70 sm:flex-row sm:items-start"
+      ? "flex w-full flex-col gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-70 sm:flex-row sm:items-start"
       : "flex w-full flex-col gap-3 text-left transition disabled:cursor-not-allowed disabled:opacity-70 sm:flex-row sm:items-start";
 
   return (
@@ -68,7 +68,7 @@ export function TaskCompletionToggle({
       >
         <span
           aria-hidden="true"
-          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-sm font-bold ${
+          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-sm font-bold ${
             isCompleted
               ? "border-emerald-500 bg-emerald-500 text-white"
               : "border-slate-300 bg-white text-transparent"

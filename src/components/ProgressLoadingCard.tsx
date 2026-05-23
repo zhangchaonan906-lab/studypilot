@@ -21,7 +21,7 @@ export function ProgressLoadingCard({
     <div
       role={error ? "alert" : "status"}
       aria-live="polite"
-      className="min-w-0 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-950 shadow-sm"
+      className="min-w-0 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-950 shadow-sm sm:p-5"
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
@@ -42,7 +42,7 @@ export function ProgressLoadingCard({
 
       <p className="mt-3 break-words text-blue-800">{hint}</p>
       {timeoutMessage ? (
-        <p className="mt-3 rounded-lg bg-white/75 px-3 py-2 text-blue-900">
+        <p className="mt-3 rounded-xl bg-white/75 px-3 py-2 text-blue-900">
           {timeoutMessage}
         </p>
       ) : null}

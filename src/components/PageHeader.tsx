@@ -8,12 +8,16 @@ export function PageHeader({
   description: string;
 }) {
   return (
-    <section className="mb-5">
+    <section className="mb-6">
       {eyebrow ? (
         <p className="mb-2 text-sm font-semibold text-primary">{eyebrow}</p>
       ) : null}
-      <h1 className="text-2xl font-bold tracking-normal text-ink sm:text-3xl">{title}</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{description}</p>
+      <h1 className="max-w-4xl text-3xl font-bold tracking-normal text-ink sm:text-4xl">
+        {title}
+      </h1>
+      <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
+        {description}
+      </p>
     </section>
   );
 }

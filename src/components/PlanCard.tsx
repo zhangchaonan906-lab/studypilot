@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Badge } from "./Badge";
+import { ProgressBar } from "./ProgressBar";
 
 export type PlanCardData = {
   id: string;
@@ -14,34 +16,28 @@ export function PlanCard({ plan }: { plan: PlanCardData }) {
   return (
     <Link
       href={`/plans/${plan.id}`}
-      className="block rounded-xl border border-slate-200 bg-white p-4 shadow-soft transition hover:-translate-y-0.5 hover:border-blue-200"
+      className="block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-soft"
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold text-primary">
+        <div className="min-w-0">
+          <Badge tone={plan.status === "completed" ? "emerald" : plan.status === "archived" ? "slate" : "blue"}>
             {plan.status === "completed" ? "已完成" : plan.status === "archived" ? "已归档" : "进行中"}
-          </p>
+          </Badge>
           <h2 className="mt-1 text-lg font-bold text-ink">{plan.title}</h2>
         </div>
-        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-primary">
-          {plan.daily_minutes} 分钟/天
-        </span>
+        <Badge tone="violet">{plan.daily_minutes} 分钟/天</Badge>
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-600">{plan.goal}</p>
       <div className="mt-4">
         <div className="flex items-center justify-between text-xs text-slate-500">
           <span>当前进度</span>
-          <span>待生成每日安排</span>
+          <span>打开查看安排</span>
         </div>
-        <div className="mt-2 h-2 rounded-full bg-slate-100">
-          <div className="h-2 w-1/5 rounded-full bg-primary" />
-        </div>
+        <ProgressBar value={20} className="mt-2" />
       </div>
       <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
-        <span className="rounded-full bg-slate-100 px-3 py-1">截止 {plan.deadline}</span>
-        <span className="rounded-full bg-slate-100 px-3 py-1">
-          {plan.overview ?? "基础计划"}
-        </span>
+        <Badge tone="slate">截止 {plan.deadline}</Badge>
+        <Badge tone="slate">{plan.overview ?? "基础计划"}</Badge>
       </div>
     </Link>
   );

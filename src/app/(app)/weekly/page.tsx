@@ -1,3 +1,4 @@
+import { Badge } from "@/components/Badge";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
@@ -64,32 +65,24 @@ export default async function WeeklyPage() {
           />
         </section>
       ) : (
-        <section className="mt-6 grid gap-5 xl:grid-cols-[360px_1fr]">
-          <aside className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
-            <p className="text-sm font-semibold text-primary">
-              第 {currentWeek.weekIndex} 周
-            </p>
-            <h2 className="mt-1 text-lg font-bold text-ink">生成本周总结</h2>
+        <section className="mt-6 grid gap-5 xl:grid-cols-[380px_1fr]">
+          <aside className="sp-card h-fit">
+            <Badge tone="blue">第 {currentWeek.weekIndex} 周</Badge>
+            <h2 className="mt-3 text-xl font-bold text-ink">生成本周总结</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
+              当前计划：{currentPlan.title}
+            </p>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
               范围：{currentWeek.startDate} 至 {currentWeek.endDate}
             </p>
-            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
-              <div className="rounded-lg bg-slate-50 px-2 py-3">
-                <p className="font-bold text-ink">{currentWeek.taskCount}</p>
-                <p className="mt-1 text-slate-500">任务</p>
-              </div>
-              <div className="rounded-lg bg-slate-50 px-2 py-3">
-                <p className="font-bold text-ink">{currentWeek.reflectionCount}</p>
-                <p className="mt-1 text-slate-500">复盘</p>
-              </div>
-              <div className="rounded-lg bg-slate-50 px-2 py-3">
-                <p className="font-bold text-ink">{currentWeek.mistakeCount}</p>
-                <p className="mt-1 text-slate-500">错题</p>
-              </div>
+            <div className="mt-5 grid grid-cols-3 gap-2 text-center text-sm">
+              <WeeklyMiniStat label="任务" value={currentWeek.taskCount} />
+              <WeeklyMiniStat label="复盘" value={currentWeek.reflectionCount} />
+              <WeeklyMiniStat label="错题" value={currentWeek.mistakeCount} />
             </div>
 
             {!hasWeeklyData ? (
-              <div className="mt-4 rounded-lg bg-blue-50 px-3 py-3 text-sm leading-6 text-blue-900">
+              <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-3 py-3 text-sm leading-6 text-blue-900">
                 本周还没有可分析的学习数据。完成任务、写复盘或记录错题后再生成总结。
               </div>
             ) : null}
@@ -105,19 +98,15 @@ export default async function WeeklyPage() {
             </div>
           </aside>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
+          <div className="sp-card">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-lg font-bold text-ink">历史周总结</h2>
+                <h2 className="sp-section-title">学习报告</h2>
                 <p className="mt-1 text-sm text-slate-500">
                   同一计划同一周再次生成时，会更新原总结。
                 </p>
               </div>
-              {latest ? (
-                <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-primary">
-                  最近：第 {latest.week_index} 周
-                </span>
-              ) : null}
+              {latest ? <Badge tone="violet">最近：第 {latest.week_index} 周</Badge> : null}
             </div>
 
             {summaries.length === 0 ? (
@@ -128,34 +117,31 @@ export default async function WeeklyPage() {
                 />
               </div>
             ) : (
-              <div className="mt-5 space-y-4">
+              <div className="mt-5 space-y-5">
                 {summaries.map((summary) => (
-                  <article key={summary.id} className="rounded-lg bg-slate-50 p-4">
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                      <h3 className="font-bold text-ink">
-                        第 {summary.week_index} 周总结
-                      </h3>
-                      <span className="text-sm text-slate-500">
-                        {summary.start_date} - {summary.end_date}
-                      </span>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
-                      <span className="rounded-full bg-white px-3 py-1">
+                  <article key={summary.id} className="rounded-2xl bg-slate-50 p-4 sm:p-5">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <h3 className="text-lg font-bold text-ink">
+                          第 {summary.week_index} 周总结
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {summary.start_date} - {summary.end_date}
+                        </p>
+                      </div>
+                      <Badge tone="blue">
                         完成率{" "}
                         {summary.completion_rate === null ||
                         summary.completion_rate === undefined
                           ? "--"
                           : `${Number(summary.completion_rate).toFixed(0)}%`}
-                      </span>
+                      </Badge>
                     </div>
                     <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                      <SummaryBlock title="总结" content={summary.summary} />
-                      <SummaryBlock title="做得好的地方" content={summary.strengths} />
-                      <SummaryBlock title="需要改进的问题" content={summary.weaknesses} />
-                      <SummaryBlock
-                        title="下周建议"
-                        content={summary.next_week_advice}
-                      />
+                      <SummaryBlock title="本周总结" content={summary.summary} tone="blue" />
+                      <SummaryBlock title="做得好的地方" content={summary.strengths} tone="emerald" />
+                      <SummaryBlock title="需要改进的地方" content={summary.weaknesses} tone="amber" />
+                      <SummaryBlock title="下周建议" content={summary.next_week_advice} tone="violet" />
                     </div>
                   </article>
                 ))}
@@ -168,13 +154,35 @@ export default async function WeeklyPage() {
   );
 }
 
-function SummaryBlock({ title, content }: { title: string; content: string | null }) {
+function WeeklyMiniStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg bg-white p-3">
+    <div className="rounded-2xl bg-slate-50 px-2 py-3">
+      <p className="font-bold text-ink">{value}</p>
+      <p className="mt-1 text-slate-500">{label}</p>
+    </div>
+  );
+}
+
+function SummaryBlock({
+  title,
+  content,
+  tone,
+}: {
+  title: string;
+  content: string | null;
+  tone: "blue" | "emerald" | "amber" | "violet";
+}) {
+  const toneClass = {
+    blue: "border-blue-100 bg-blue-50/70",
+    emerald: "border-emerald-100 bg-emerald-50/70",
+    amber: "border-amber-100 bg-amber-50/70",
+    violet: "border-violet-100 bg-violet-50/70",
+  }[tone];
+
+  return (
+    <div className={`rounded-2xl border p-4 ${toneClass}`}>
       <p className="text-sm font-semibold text-ink">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-600">
-        {content ?? "暂无内容"}
-      </p>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{content ?? "暂无内容"}</p>
     </div>
   );
 }

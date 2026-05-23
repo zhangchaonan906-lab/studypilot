@@ -114,33 +114,35 @@ export function NewPlanForm() {
   }
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
-      <form onSubmit={handleSubmit} className="grid gap-5">
+    <section className="sp-card">
+      <form onSubmit={handleSubmit} className="grid gap-6">
         <label className="block">
-          <span className="text-sm font-semibold text-slate-700">计划标题</span>
+          <span className="sp-label">计划标题</span>
           <input
             name="title"
             placeholder="例如：高数期末冲刺"
-            className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-blue-100"
+            className="sp-input"
           />
+          <p className="sp-help">用一句话命名这个阶段，比如课程、考试或技能目标。</p>
         </label>
 
         <label className="block">
-          <span className="text-sm font-semibold text-slate-700">学习目标</span>
+          <span className="sp-label">学习目标</span>
           <textarea
             name="goal"
             placeholder="例如：30 天内完成高等数学期末复习，重点提升积分和应用题"
             rows={4}
-            className="mt-2 w-full resize-none rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-blue-100"
+            className="sp-input resize-none"
           />
+          <p className="sp-help">目标越具体，AI 拆出来的每日任务越稳。</p>
         </label>
 
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <label className="block">
-            <span className="text-sm font-semibold text-slate-700">当前水平</span>
+            <span className="sp-label">当前水平</span>
             <select
               name="current_level"
-              className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-blue-100"
+              className="sp-input"
             >
               <option>基础薄弱</option>
               <option>能跟上课程</option>
@@ -148,43 +150,45 @@ export function NewPlanForm() {
             </select>
           </label>
           <label className="block">
-            <span className="text-sm font-semibold text-slate-700">截止日期</span>
+            <span className="sp-label">截止日期</span>
             <input
               name="deadline"
               type="date"
               onChange={(event) => setSelectedDeadline(event.target.value)}
-              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-blue-100"
+              className="sp-input"
             />
+            <p className="sp-help">公测版最多生成前 30 天。</p>
           </label>
           <label className="block">
-            <span className="text-sm font-semibold text-slate-700">每天学习时间</span>
+            <span className="sp-label">每天学习时间</span>
             <input
               name="daily_minutes"
               type="number"
               min="15"
               max="600"
               placeholder="90"
-              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-blue-100"
+              className="sp-input"
             />
+            <p className="sp-help">建议先填能稳定坚持的时间。</p>
           </label>
           <label className="block">
-            <span className="text-sm font-semibold text-slate-700">每周休息天数</span>
+            <span className="sp-label">每周休息天数</span>
             <input
               name="rest_days_per_week"
               type="number"
               min="0"
               max="6"
               defaultValue="1"
-              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-blue-100"
+              className="sp-input"
             />
           </label>
         </div>
 
         <label className="block">
-          <span className="text-sm font-semibold text-slate-700">学习偏好</span>
+          <span className="sp-label">学习偏好</span>
           <select
             name="preference"
-            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-blue-100"
+            className="sp-input"
           >
             {preferences.map((item) => (
               <option key={item}>{item}</option>
@@ -193,12 +197,12 @@ export function NewPlanForm() {
         </label>
 
         {shouldShowPublicBetaLimit ? (
-          <div className="rounded-lg bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+          <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
             公测版当前最多生成 30 天计划，后续版本会开放更长周期。
           </div>
         ) : null}
 
-        <div className="rounded-lg bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
           提交后会在服务端调用 AI，并把计划、每日安排、任务和资料建议保存到 Supabase。生成学习计划通常需要 20-60 秒，请不要关闭页面。
         </div>
 
@@ -216,7 +220,7 @@ export function NewPlanForm() {
         <button
           type="submit"
           disabled={submitButton.disabled}
-          className="w-full rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-fit"
+          className="btn-primary w-full sm:w-fit"
         >
           {submitButton.label}
         </button>

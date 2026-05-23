@@ -108,7 +108,7 @@ export function WeeklySummaryGenerator({
         type="button"
         disabled={disabled || submitButton.disabled}
         onClick={handleGenerate}
-        className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto"
+        className="btn-primary w-full disabled:bg-slate-300 sm:w-auto"
       >
         {submitButton.label}
       </button>

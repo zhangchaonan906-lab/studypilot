@@ -9,12 +9,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#18212f",
-        mist: "#f5f7fb",
-        primary: "#2563eb",
+        ink: "#172033",
+        mist: "#f8fafc",
+        primary: "#4f46e5",
       },
       boxShadow: {
-        soft: "0 18px 45px rgba(24, 33, 47, 0.08)",
+        soft: "0 18px 45px rgba(23, 32, 51, 0.08)",
       },
     },
   },

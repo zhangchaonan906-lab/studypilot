@@ -8,6 +8,11 @@
   color: #18212f;
 }
 
+html {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -15,9 +20,10 @@
 body {
   min-height: 100vh;
   margin: 0;
+  overflow-x: hidden;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 247, 251, 0.98)),
-    #f5f7fb;
+    linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(239, 246, 255, 0.72) 42%, rgba(248, 250, 252, 0.98)),
+    #f8fafc;
   color: #18212f;
   font-family: Arial, "Microsoft YaHei", "PingFang SC", sans-serif;
 }
@@ -31,9 +37,72 @@ button,
 input,
 textarea,
 select {
+  max-width: 100%;
   font: inherit;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
 }
 
 ::selection {
   background: #bfdbfe;
+}
+
+@layer components {
+  .sp-card {
+    @apply min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .sp-card-soft {
+    @apply min-w-0 rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur sm:p-6;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .sp-section-title {
+    @apply text-lg font-bold tracking-normal text-ink;
+  }
+
+  .sp-muted {
+    @apply text-sm leading-6 text-slate-600;
+  }
+
+  .sp-label {
+    @apply text-sm font-semibold text-slate-700;
+  }
+
+  .sp-help {
+    @apply mt-1 text-xs leading-5 text-slate-500;
+  }
+
+  .sp-input {
+    @apply mt-2 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-ink outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-indigo-100;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:text-slate-400;
+  }
+
+  .badge-soft {
+    @apply inline-flex w-fit items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-primary;
+  }
+
+  .badge-neutral {
+    @apply inline-flex w-fit items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600;
+  }
+}
+
+@media (min-width: 640px) {
+  .sp-card,
+  .sp-card-soft {
+    max-width: none;
+  }
 }

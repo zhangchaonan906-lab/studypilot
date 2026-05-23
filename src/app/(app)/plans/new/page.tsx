@@ -9,9 +9,11 @@ export default function NewPlanPage() {
       <PageHeader
         eyebrow="新建计划"
         title="告诉 StudyPilot 你的学习目标"
-        description="这一步只创建基础计划并写入 Supabase，不调用 AI。"
+        description="填写目标、截止日期和学习偏好，AI 会在服务端生成每日安排、任务和资料建议。"
       />
-      <NewPlanForm />
+      <div className="mx-auto max-w-5xl">
+        <NewPlanForm />
+      </div>
     </>
   );
 }

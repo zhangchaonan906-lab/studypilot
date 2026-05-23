@@ -20,7 +20,7 @@ export function SubmitButton({
       disabled={pending}
       className={
         className ??
-        "w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+        "btn-primary w-full"
       }
     >
       <span className="whitespace-nowrap">{pending ? pendingLabel : children}</span>
