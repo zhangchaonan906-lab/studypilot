@@ -68,9 +68,11 @@ describe("generatePlan", () => {
     expect(prompt).toContain("每 7 天安排一次复盘任务");
     expect(prompt).toContain("不要编造具体 URL");
     expect(prompt).toContain("每天任务数量 2 到 4 个");
-    expect(prompt).toContain("每 3 天生成一次 resources");
+    expect(prompt).toContain("第 1 天以及之后每 3 天生成 resources");
+    expect(prompt).toContain("dayIndex 为 1、4、7、10、13、16");
     expect(prompt).toContain("每个 day 都必须包含 resources 字段");
     expect(prompt).toContain("resources 返回空数组 []");
+    expect(prompt).toContain("后端会自动忽略");
     expect(prompt).toContain("每个 day 都必须包含 tasks 数组");
     expect(prompt).toContain("每个 task 必须包含 content、priority、estimatedMinutes");
     expect(prompt).toContain("每个 day 必须包含 reviewMethod");
@@ -199,6 +201,105 @@ describe("generatePlan", () => {
     expect(normalized.days[0].tasks[0].priority).toBe("must");
     expect(normalized.days[0].tasks[0].estimatedMinutes).toBe(30);
     expect(normalized.days[0].tasks[1].estimatedMinutes).toBe(45);
+  });
+
+  it("keeps resources only on public beta resource days", () => {
+    const days = Array.from({ length: 15 }, (_, index) => ({
+      dayIndex: index + 1,
+      date: `2026-06-${String(index + 1).padStart(2, "0")}`,
+      title: `第 ${index + 1} 天`,
+      summary: "完成学习任务。",
+      reviewMethod: index + 1 === 7 || index + 1 === 14 ? "复盘今日重点。" : "回顾今日重点。",
+      tasks: [
+        {
+          content: "完成 6 道练习题并订正",
+          priority: "must",
+          estimatedMinutes: 30,
+        },
+        {
+          content: "整理今日知识点笔记",
+          priority: "should",
+          estimatedMinutes: 20,
+        },
+      ],
+      resources: [
+        {
+          title: `第 ${index + 1} 天资料`,
+          type: "search_keyword",
+          description: "资料说明。",
+          searchKeywords: `第 ${index + 1} 天 搜索关键词`,
+        },
+      ],
+    }));
+
+    const normalized = normalizeAIPlanResult(
+      {
+        title: "15 天计划",
+        overview: "每日学习。",
+        days,
+      },
+      {
+        ...input,
+        startDate: "2026-06-01",
+        deadline: "2026-06-15",
+        maxDays: 15,
+      }
+    );
+
+    expect(normalized.days[0].resources).toHaveLength(1);
+    expect(normalized.days[3].resources).toHaveLength(1);
+    expect(normalized.days[6].resources).toHaveLength(1);
+    expect(normalized.days[14].resources).toEqual([]);
+  });
+
+  it("generates successfully when AI returns resources on day 15", async () => {
+    const days = Array.from({ length: 15 }, (_, index) => ({
+      dayIndex: index + 1,
+      date: `2026-06-${String(index + 1).padStart(2, "0")}`,
+      title: `第 ${index + 1} 天`,
+      summary: "完成学习任务。",
+      reviewMethod: index + 1 === 7 || index + 1 === 14 ? "复盘今日重点。" : "回顾今日重点。",
+      tasks: [
+        {
+          content: "完成 6 道练习题并订正",
+          priority: "must",
+          estimatedMinutes: 30,
+        },
+        {
+          content: "整理今日知识点笔记",
+          priority: "should",
+          estimatedMinutes: 20,
+        },
+      ],
+      resources:
+        index + 1 === 15
+          ? [
+              {
+                title: "第 15 天错误资料",
+                type: "search_keyword",
+                description: "这条应被清空。",
+                searchKeywords: "第 15 天 搜索关键词",
+              },
+            ]
+          : [],
+    }));
+
+    const plan = await generatePlan(
+      {
+        ...input,
+        startDate: "2026-06-01",
+        deadline: "2026-06-15",
+        maxDays: 15,
+      },
+      async () =>
+        JSON.stringify({
+          title: "15 天计划",
+          overview: "每日学习。",
+          days,
+        })
+    );
+
+    expect(plan.days[14].resources).toEqual([]);
   });
 
   it("retries once when the first AI response is not parseable JSON", async () => {

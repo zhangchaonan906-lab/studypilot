@@ -229,4 +229,35 @@ describe("generated plan schema", () => {
     expect(result.ok).toBe(false);
     expect(result.error).toContain("超过每天可学习时间");
   });
+
+  it("does not reject resources on non-resource days after normalization", () => {
+    const result = validateGeneratedPlan(
+      generatedPlanSchema.parse({
+        ...generatedPlan,
+        days: [
+          {
+            ...generatedPlan.days[0],
+            dayIndex: 15,
+            date: "2026-06-06",
+            resources: [
+              {
+                title: "额外资料",
+                type: "search_keyword",
+                description: "即使出现也不应让计划失败。",
+                searchKeywords: "高等数学 复习",
+              },
+            ],
+          },
+        ],
+      }),
+      {
+        startDate: "2026-05-23",
+        deadline: "2026-06-30",
+        dailyMinutes: 90,
+        maxDays: 30,
+      }
+    );
+
+    expect(result.ok).toBe(true);
+  });
 });

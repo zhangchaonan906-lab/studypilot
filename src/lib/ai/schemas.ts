@@ -316,12 +316,6 @@ export function validateGeneratedPlan(
       }
     }
 
-    if (day.dayIndex % 3 !== 1 && day.resources.length > 0) {
-      return {
-        ok: false,
-        error: `AI 返回的第 ${day.dayIndex} 天不应生成资料建议，公测版每 3 天生成一次资料。`,
-      };
-    }
   }
 
   return { ok: true };
