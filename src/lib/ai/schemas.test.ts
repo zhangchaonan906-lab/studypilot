@@ -87,6 +87,68 @@ describe("generated plan schema", () => {
     expect(generatedPlanSchema.safeParse(generatedPlan).success).toBe(true);
   });
 
+  it("accepts common AI field aliases and defaults missing resources", () => {
+    const result = generatedPlanSchema.safeParse({
+      title: "高数计划",
+      overview: "每日练习。",
+      days: [
+        {
+          dayIndex: "1",
+          date: "2026-05-23",
+          title: "积分诊断",
+          summary: "找到薄弱点。",
+          review_method: null,
+          tasks: [
+            {
+              content: "完成 8 道换元积分题并标记错因",
+              priority: "high",
+              estimated_minutes: "35",
+            },
+            {
+              content: "整理 3 条换元法适用条件",
+              priority: "medium",
+              estimatedMinutes: 20,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.days[0].resources).toEqual([]);
+      expect(result.data.days[0].reviewMethod).toBe("完成后用 5 分钟回顾今日重点。");
+      expect(result.data.days[0].tasks[0].priority).toBe("must");
+      expect(result.data.days[0].tasks[0].estimatedMinutes).toBe(35);
+    }
+  });
+
+  it("accepts search keyword aliases in resources", () => {
+    const result = generatedPlanSchema.safeParse({
+      ...generatedPlan,
+      days: [
+        {
+          ...generatedPlan.days[0],
+          resources: [
+            {
+              title: "积分例题",
+              type: "search_keyword",
+              description: "搜索例题讲解。",
+              search_keywords: "高等数学 积分 例题",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.days[0].resources[0].searchKeywords).toBe("高等数学 积分 例题");
+    }
+  });
+
   it("rejects invalid priorities and too few tasks", () => {
     const invalid = {
       ...generatedPlan,

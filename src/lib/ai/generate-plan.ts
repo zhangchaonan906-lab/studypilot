@@ -1,7 +1,10 @@
 import { callAIJson } from "./client";
 import {
+  DEFAULT_REVIEW_METHOD,
   GeneratedPlan,
   GeneratePlanRequestWithDates,
+  addDays,
+  formatDateOnly,
   generatedPlanSchema,
   validateGeneratedPlan,
 } from "./schemas";
@@ -18,23 +21,35 @@ class AIJsonParseError extends Error {
   }
 }
 
+class AIPlanSchemaError extends Error {
+  constructor(public issues: string[]) {
+    super(AI_PLAN_SCHEMA_ERROR_MESSAGE);
+    this.name = "AIPlanSchemaError";
+  }
+}
+
 export async function generatePlan(
   input: GeneratePlanRequestWithDates,
   invokeAI: InvokeAI = callAIJson
 ): Promise<GeneratedPlan> {
   const rawContent = await invokeAI(buildGeneratePlanMessages(input), { maxTokens: 6500 });
+  let retryOptions: GeneratePlanPromptOptions | null = null;
 
   try {
     return parseAndValidateGeneratedPlan(rawContent, input);
   } catch (error) {
-    if (!(error instanceof AIJsonParseError)) {
+    if (error instanceof AIJsonParseError) {
+      logAIPlanParseFailure(rawContent, 1);
+      retryOptions = { retryForInvalidJson: true };
+    } else if (error instanceof AIPlanSchemaError) {
+      logAIPlanSchemaFailure(error.issues, rawContent, 1);
+      retryOptions = { schemaIssues: error.issues };
+    } else {
       throw error;
     }
-
-    logAIPlanParseFailure(rawContent, 1);
   }
 
-  const retryContent = await invokeAI(buildGeneratePlanMessages(input, { retryForInvalidJson: true }), {
+  const retryContent = await invokeAI(buildGeneratePlanMessages(input, retryOptions), {
     maxTokens: 6500,
   });
 
@@ -46,6 +61,11 @@ export async function generatePlan(
       throw new Error(AI_JSON_PARSE_ERROR_MESSAGE);
     }
 
+    if (error instanceof AIPlanSchemaError) {
+      logAIPlanSchemaFailure(error.issues, retryContent, 2);
+      throw new Error(AI_PLAN_SCHEMA_ERROR_MESSAGE);
+    }
+
     throw error;
   }
 }
@@ -55,10 +75,13 @@ function parseAndValidateGeneratedPlan(
   input: GeneratePlanRequestWithDates
 ) {
   const parsedJson = parseAIJson(rawContent);
-  const parsedPlan = generatedPlanSchema.safeParse(parsedJson);
+  const normalizedJson = normalizeAIPlanResult(parsedJson, input);
+  const parsedPlan = generatedPlanSchema.safeParse(normalizedJson);
 
   if (!parsedPlan.success) {
-    throw new Error(AI_PLAN_SCHEMA_ERROR_MESSAGE);
+    throw new AIPlanSchemaError(
+      parsedPlan.error.issues.map((issue) => `${issue.path.join(".") || "root"}: ${issue.message}`)
+    );
   }
 
   const validation = validateGeneratedPlan(parsedPlan.data, {
@@ -75,12 +98,26 @@ function parseAndValidateGeneratedPlan(
   return parsedPlan.data;
 }
 
+type GeneratePlanPromptOptions = {
+  retryForInvalidJson?: boolean;
+  schemaIssues?: string[];
+} | null;
+
 export function buildGeneratePlanMessages(
   input: GeneratePlanRequestWithDates,
-  options: { retryForInvalidJson?: boolean } = {}
+  options: GeneratePlanPromptOptions = {}
 ) {
   const preference = input.preference || "无特殊偏好";
   const currentLevel = input.currentLevel || "未填写";
+  const retryInstruction = options?.retryForInvalidJson
+    ? "上一次输出不是合法 JSON，请只返回合法 JSON，不要包含任何说明文字。"
+    : options?.schemaIssues
+      ? [
+          "上一次 JSON 结构没有通过校验，请修复 JSON 结构后重新输出。",
+          "校验失败原因：",
+          ...options.schemaIssues.slice(0, 8).map((issue) => `- ${issue}`),
+        ].join("\n")
+      : "";
 
   return [
     {
@@ -91,9 +128,7 @@ export function buildGeneratePlanMessages(
     {
       role: "user" as const,
       content: [
-        options.retryForInvalidJson
-          ? "上一次输出不是合法 JSON，请只返回合法 JSON，不要包含任何说明文字。"
-          : "",
+        retryInstruction,
         "请根据以下信息生成中文学习计划。",
         `计划标题：${input.title}`,
         `学习目标：${input.goal}`,
@@ -116,6 +151,9 @@ export function buildGeneratePlanMessages(
         "8. 资料推荐不要编造具体 URL，只提供 type、description 和 searchKeywords；每 3 天生成一次 resources，只在 dayIndex 为 1、4、7、10... 的天数填写，其他天 resources 为空数组。",
         "9. 任务必须具体可执行，不要写“认真学习”“好好复习”。",
         "10. summary、reviewMethod、resource description 都要简短；reviewMethod 控制在一句话以内。",
+        "11. 每个 day 都必须包含 resources 字段；如果当天没有资料建议，resources 返回空数组 []。",
+        "12. 每个 day 都必须包含 tasks 数组；每个 task 必须包含 content、priority、estimatedMinutes。",
+        "13. 每个 day 必须包含 reviewMethod。",
         "",
         "JSON 结构必须完全符合：",
         JSON.stringify({
@@ -149,6 +187,162 @@ export function buildGeneratePlanMessages(
       ].join("\n"),
     },
   ];
+}
+
+export function normalizeAIPlanResult(
+  value: unknown,
+  input: GeneratePlanRequestWithDates
+) {
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  const rawDays = Array.isArray(value.days) ? value.days : [];
+
+  return {
+    ...value,
+    title: getNonEmptyString(value.title) ?? input.title,
+    overview:
+      getNonEmptyString(value.overview) ?? `围绕“${input.goal}”安排每日任务、练习和复盘。`,
+    days: rawDays.map((rawDay, index) => normalizeAIPlanDay(rawDay, index, input)),
+  };
+}
+
+function normalizeAIPlanDay(
+  rawDay: unknown,
+  index: number,
+  input: GeneratePlanRequestWithDates
+) {
+  const day = isRecord(rawDay) ? rawDay : {};
+  const dayIndex = toPositiveInteger(day.dayIndex ?? day.day_index) ?? index + 1;
+  const rawTasks = Array.isArray(day.tasks) ? day.tasks : [];
+  const normalizedTasks = rawTasks.map((task) =>
+    normalizeAIPlanTask(task, input.dailyMinutes, Math.max(rawTasks.length, 2))
+  );
+
+  return {
+    ...day,
+    dayIndex,
+    date: normalizeDateString(day.date, input.startDate, dayIndex),
+    title: getNonEmptyString(day.title) ?? `第 ${dayIndex} 天学习安排`,
+    summary: getNonEmptyString(day.summary) ?? "完成今天的学习重点。",
+    reviewMethod:
+      getNonEmptyString(day.reviewMethod ?? day.review_method) ?? DEFAULT_REVIEW_METHOD,
+    tasks: normalizedTasks,
+    resources:
+      dayIndex % 3 === 1
+        ? normalizeAIPlanResources(Array.isArray(day.resources) ? day.resources : [])
+        : [],
+  };
+}
+
+function normalizeAIPlanTask(
+  rawTask: unknown,
+  dailyMinutes: number,
+  taskCount: number
+) {
+  const task = isRecord(rawTask) ? rawTask : {};
+  const estimatedMinutes =
+    toPositiveInteger(task.estimatedMinutes ?? task.estimated_minutes) ??
+    Math.max(1, Math.floor(dailyMinutes / taskCount));
+
+  return {
+    ...task,
+    content: getNonEmptyString(task.content) ?? "完成今日学习任务并记录重点",
+    priority: normalizePriority(task.priority) ?? "must",
+    estimatedMinutes,
+  };
+}
+
+function normalizeAIPlanResources(rawResources: unknown[]) {
+  return rawResources.map((rawResource) => {
+    const resource = isRecord(rawResource) ? rawResource : {};
+    const searchKeywords = getNonEmptyString(
+      resource.searchKeywords ?? resource.search_keywords
+    );
+
+    return {
+      ...resource,
+      title:
+        getNonEmptyString(resource.title) ??
+        searchKeywords ??
+        "学习资料建议",
+      type: getNonEmptyString(resource.type) ?? "search_keyword",
+      description: getNonEmptyString(resource.description) ?? null,
+      searchKeywords: searchKeywords ?? null,
+    };
+  });
+}
+
+function normalizePriority(value: unknown) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  const priorityMap: Record<string, "must" | "should" | "optional"> = {
+    high: "must",
+    important: "must",
+    must: "must",
+    "必做": "must",
+    "重要": "must",
+    "必须": "must",
+    "核心": "must",
+    medium: "should",
+    normal: "should",
+    should: "should",
+    "建议": "should",
+    "推荐": "should",
+    "普通": "should",
+    low: "optional",
+    optional: "optional",
+    "可选": "optional",
+    "补充": "optional",
+  };
+
+  return priorityMap[normalized] ?? null;
+}
+
+function normalizeDateString(value: unknown, startDate: string, dayIndex: number) {
+  const fallbackDate = formatDateOnly(addDays(parseDateOnlySafe(startDate), dayIndex - 1));
+
+  if (typeof value !== "string") {
+    return fallbackDate;
+  }
+
+  const normalized = value.trim().replace(/\//g, "-");
+  const match = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+
+  if (!match) {
+    return fallbackDate;
+  }
+
+  const [, year, month, day] = match;
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+
+function parseDateOnlySafe(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function getNonEmptyString(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function toPositiveInteger(value: unknown) {
+  const numberValue =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && value.trim().length > 0
+        ? Number(value)
+        : Number.NaN;
+
+  return Number.isInteger(numberValue) && numberValue > 0 ? numberValue : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 export function parseAIJson(content: string) {
@@ -240,6 +434,14 @@ function logAIPlanParseFailure(rawContent: string, attempt: number) {
 
   console.warn(
     `[StudyPilot] AI plan JSON parse failed on attempt ${attempt}. Raw prefix:`,
+    rawContent.slice(0, 500)
+  );
+}
+
+function logAIPlanSchemaFailure(issues: string[], rawContent: string, attempt: number) {
+  console.warn(`[StudyPilot] AI plan zod validation failed on attempt ${attempt}. Issues:`, issues);
+  console.warn(
+    `[StudyPilot] AI plan zod validation raw prefix on attempt ${attempt}:`,
     rawContent.slice(0, 500)
   );
 }

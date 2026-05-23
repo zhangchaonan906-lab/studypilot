@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const PUBLIC_BETA_MAX_PLAN_DAYS = 30;
+export const DEFAULT_REVIEW_METHOD = "完成后用 5 分钟回顾今日重点。";
 
 const dateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "日期格式必须是 YYYY-MM-DD");
 
@@ -14,28 +15,105 @@ export const generatePlanRequestSchema = z.object({
   preference: z.string().trim().optional().nullable(),
 });
 
-const taskSchema = z.object({
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function emptyStringToUndefined(value: unknown) {
+  if (
+    value === null ||
+    value === undefined ||
+    (typeof value === "string" && value.trim().length === 0)
+  ) {
+    return undefined;
+  }
+
+  return value;
+}
+
+function normalizePriority(value: unknown) {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  const priorityMap: Record<string, "must" | "should" | "optional"> = {
+    high: "must",
+    important: "must",
+    must: "must",
+    "必做": "must",
+    "重要": "must",
+    "必须": "must",
+    "核心": "must",
+    medium: "should",
+    normal: "should",
+    should: "should",
+    "建议": "should",
+    "推荐": "should",
+    "普通": "should",
+    low: "optional",
+    optional: "optional",
+    "可选": "optional",
+    "补充": "optional",
+  };
+
+  return priorityMap[normalized] ?? value;
+}
+
+const taskSchema = z.preprocess((value) => {
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  return {
+    ...value,
+    priority: normalizePriority(value.priority),
+    estimatedMinutes: value.estimatedMinutes ?? value.estimated_minutes,
+  };
+}, z.object({
   content: z.string().trim().min(4),
   priority: z.enum(["must", "should", "optional"]),
-  estimatedMinutes: z.number().int().min(1).max(600),
-});
+  estimatedMinutes: z.coerce.number().int().min(1).max(600),
+}));
 
-const resourceSchema = z.object({
+const resourceSchema = z.preprocess((value) => {
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  return {
+    ...value,
+    searchKeywords: value.searchKeywords ?? value.search_keywords,
+  };
+}, z.object({
   title: z.string().trim().min(1),
   type: z.string().trim().nullable().optional(),
   description: z.string().trim().nullable().optional(),
   searchKeywords: z.string().trim().nullable().optional(),
-});
+}));
 
-const daySchema = z.object({
-  dayIndex: z.number().int().min(1).max(PUBLIC_BETA_MAX_PLAN_DAYS),
+const daySchema = z.preprocess((value) => {
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  return {
+    ...value,
+    reviewMethod: value.reviewMethod ?? value.review_method,
+    resources: value.resources ?? [],
+  };
+}, z.object({
+  dayIndex: z.coerce.number().int().min(1).max(PUBLIC_BETA_MAX_PLAN_DAYS),
   date: dateStringSchema,
   title: z.string().trim().min(1),
   summary: z.string().trim().nullable().optional(),
-  reviewMethod: z.string().trim().nullable().optional(),
+  reviewMethod: z.preprocess(
+    emptyStringToUndefined,
+    z.string().trim().min(1).default(DEFAULT_REVIEW_METHOD)
+  ),
   tasks: z.array(taskSchema).min(2).max(4),
-  resources: z.array(resourceSchema).min(0).max(3),
-});
+  resources: z.array(resourceSchema).min(0).max(3).default([]),
+}));
 
 export const generatedPlanSchema = z.object({
   title: z.string().trim().min(1),
