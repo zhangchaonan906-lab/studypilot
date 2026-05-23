@@ -85,23 +85,13 @@ export default async function TodayPage({
                   ) : (
                     <div className="mt-4 space-y-3">
                       {today.day.tasks.map((task) => (
-                        <article
+                        <TaskCompletionToggle
                           key={task.id}
-                          className="rounded-lg border border-slate-100 bg-slate-50 p-4"
-                        >
-                          <div className="flex items-start gap-3">
-                            <TaskCompletionToggle
-                              taskId={task.id}
-                              initialCompleted={task.is_completed}
-                            />
-                            <div className="min-w-0">
-                              <h3 className="font-bold text-ink">{task.content}</h3>
-                              <p className="mt-2 text-sm font-semibold text-slate-500">
-                                {task.estimated_minutes ?? 0} 分钟 · {task.priority}
-                              </p>
-                            </div>
-                          </div>
-                        </article>
+                          taskId={task.id}
+                          initialCompleted={task.is_completed}
+                          content={task.content}
+                          meta={`${task.estimated_minutes ?? 0} 分钟 · ${task.priority}`}
+                        />
                       ))}
                     </div>
                   )}

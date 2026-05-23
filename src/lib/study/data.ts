@@ -2,13 +2,14 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getLocalDateString, getTaskCompletionPatch } from "./forms";
+import { getLocalDateString } from "./forms";
 import {
   calculateCompletionRate,
   getCurrentWeekRange,
   getDaysUntilDeadline,
   getPlanWeekIndex,
 } from "./metrics";
+import { updateTaskCompletionForUser } from "./task-completion";
 import type {
   DashboardData,
   DailyReflection,
@@ -310,13 +311,7 @@ export async function getTodayStudyDay(
 
 export async function updateTaskCompletion(taskId: string, isCompleted: boolean) {
   const { supabase, userId } = await getAuthenticatedContext();
-  const { error } = await supabase
-    .from("tasks")
-    .update(getTaskCompletionPatch(isCompleted))
-    .eq("id", taskId)
-    .eq("user_id", userId);
-
-  throwIfError(error, "更新任务状态失败");
+  await updateTaskCompletionForUser(supabase, userId, taskId, isCompleted);
 }
 
 export async function listMistakeReviews() {

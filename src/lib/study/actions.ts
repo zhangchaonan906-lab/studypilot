@@ -45,9 +45,15 @@ export async function createPlanAction(
 }
 
 export async function updateTaskCompletionAction(taskId: string, isCompleted: boolean) {
-  await updateTaskCompletion(taskId, isCompleted);
-  revalidatePath("/dashboard");
-  revalidatePath("/today");
+  try {
+    await updateTaskCompletion(taskId, isCompleted);
+    revalidatePath("/dashboard");
+    revalidatePath("/today");
+
+    return { success: isCompleted ? "任务已完成。" : "已取消完成。" };
+  } catch {
+    return { error: "任务状态更新失败，请稍后重试。" };
+  }
 }
 
 export async function createMistakeReviewAction(formData: FormData) {
