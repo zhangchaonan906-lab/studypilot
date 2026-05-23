@@ -149,7 +149,37 @@ describe("generated plan schema", () => {
     }
   });
 
-  it("rejects invalid priorities and too few tasks", () => {
+  it("defaults unknown priority values to should", () => {
+    const result = generatedPlanSchema.safeParse({
+      ...generatedPlan,
+      days: [
+        {
+          ...generatedPlan.days[0],
+          tasks: [
+            {
+              content: "完成 8 道换元积分题并标记错因",
+              priority: "urgent",
+              estimatedMinutes: 30,
+            },
+            {
+              content: "整理 3 条换元法适用条件",
+              priority: "临时",
+              estimatedMinutes: 20,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.days[0].tasks[0].priority).toBe("should");
+      expect(result.data.days[0].tasks[1].priority).toBe("should");
+    }
+  });
+
+  it("rejects too few tasks", () => {
     const invalid = {
       ...generatedPlan,
       days: [

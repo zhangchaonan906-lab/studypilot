@@ -73,10 +73,12 @@ describe("generatePlan", () => {
     expect(prompt).toContain("每个 day 都必须包含 resources 字段");
     expect(prompt).toContain("resources 返回空数组 []");
     expect(prompt).toContain("后端会自动忽略");
+    expect(prompt).toContain("每个 day 都必须包含 dayIndex、date、title、summary、reviewMethod、tasks、resources");
     expect(prompt).toContain("每个 day 都必须包含 tasks 数组");
     expect(prompt).toContain("每个 task 必须包含 content、priority、estimatedMinutes");
     expect(prompt).toContain("每个 day 必须包含 reviewMethod");
     expect(prompt).toContain("reviewMethod 控制在一句话以内");
+    expect(prompt).toContain("不要生成“自己制定计划”");
     expect(prompt).toContain("输出要简洁");
   });
 
@@ -149,6 +151,7 @@ describe("generatePlan", () => {
               },
               {
                 content: "整理 2 个常见建模模板",
+                priority: "临时",
                 estimatedMinutes: 20,
               },
             ],
@@ -167,7 +170,7 @@ describe("generatePlan", () => {
     expect(plan.days[0].resources[0].searchKeywords).toBe("高等数学 换元积分 例题");
     expect(plan.days[1].resources).toEqual([]);
     expect(plan.days[1].tasks[0].priority).toBe("optional");
-    expect(plan.days[1].tasks[1].priority).toBe("must");
+    expect(plan.days[1].tasks[1].priority).toBe("should");
   });
 
   it("normalizes standalone AI plan JSON into the generated plan shape", () => {
@@ -188,6 +191,7 @@ describe("generatePlan", () => {
               },
               {
                 content: "整理一页公式卡片",
+                priority: "临时",
               },
             ],
           },
@@ -200,6 +204,7 @@ describe("generatePlan", () => {
     expect(normalized.days[0].reviewMethod).toBe("做完后复述错题。");
     expect(normalized.days[0].tasks[0].priority).toBe("must");
     expect(normalized.days[0].tasks[0].estimatedMinutes).toBe(30);
+    expect(normalized.days[0].tasks[1].priority).toBe("should");
     expect(normalized.days[0].tasks[1].estimatedMinutes).toBe(45);
   });
 
@@ -314,7 +319,9 @@ describe("generatePlan", () => {
 
     expect(plan.title).toBe("高数两天计划");
     expect(calls).toBe(2);
-    expect(prompts[1]).toContain("上一次输出不是合法 JSON，请只返回合法 JSON");
+    expect(prompts[1]).toContain(
+      "上一次输出不是合法 JSON，请只返回严格 JSON，不要 Markdown，不要解释文字。"
+    );
   });
 
   it("retries once when zod validation fails and sends the issue summary", async () => {

@@ -57,7 +57,7 @@ function normalizePriority(value: unknown) {
     "补充": "optional",
   };
 
-  return priorityMap[normalized] ?? value;
+  return priorityMap[normalized] ?? "should";
 }
 
 const taskSchema = z.preprocess((value) => {

@@ -110,7 +110,7 @@ export function buildGeneratePlanMessages(
   const preference = input.preference || "无特殊偏好";
   const currentLevel = input.currentLevel || "未填写";
   const retryInstruction = options?.retryForInvalidJson
-    ? "上一次输出不是合法 JSON，请只返回合法 JSON，不要包含任何说明文字。"
+    ? "上一次输出不是合法 JSON，请只返回严格 JSON，不要 Markdown，不要解释文字。"
     : options?.schemaIssues
       ? [
           "上一次 JSON 结构没有通过校验，请修复 JSON 结构后重新输出。",
@@ -149,12 +149,13 @@ export function buildGeneratePlanMessages(
         "6. priority 只能是 must、should、optional。",
         "7. 每 7 天安排一次复盘任务，任务内容或 reviewMethod 必须包含“复盘”。",
         "8. 资料推荐不要编造具体 URL，只提供 type、description 和 searchKeywords；只有第 1 天以及之后每 3 天生成 resources，也就是 dayIndex 为 1、4、7、10、13、16... 时可以填写 resources，其他日期 resources 返回空数组 []。",
-        "9. 任务必须具体可执行，不要写“认真学习”“好好复习”。",
+        "9. 任务必须具体可执行，不要生成“自己制定计划”“认真学习”“好好复习”这种空泛任务。",
         "10. summary、reviewMethod、resource description 都要简短；reviewMethod 控制在一句话以内。",
         "11. 每个 day 都必须包含 resources 字段；如果当天没有资料建议，resources 返回空数组 []。",
         "12. 每个 day 都必须包含 tasks 数组；每个 task 必须包含 content、priority、estimatedMinutes。",
         "13. 每个 day 必须包含 reviewMethod。",
-        "14. 如果 resources 偶尔出现在非资源日，后端会自动忽略；你仍应尽量在非资源日返回 []。",
+        "14. 每个 day 都必须包含 dayIndex、date、title、summary、reviewMethod、tasks、resources。",
+        "15. 如果 resources 偶尔出现在非资源日，后端会自动忽略；你仍应尽量在非资源日返回 []。",
         "",
         "JSON 结构必须完全符合：",
         JSON.stringify({
@@ -250,7 +251,7 @@ function normalizeAIPlanTask(
   return {
     ...task,
     content: getNonEmptyString(task.content) ?? "完成今日学习任务并记录重点",
-    priority: normalizePriority(task.priority) ?? "must",
+    priority: normalizePriority(task.priority) ?? "should",
     estimatedMinutes,
   };
 }
@@ -301,7 +302,7 @@ function normalizePriority(value: unknown) {
     "补充": "optional",
   };
 
-  return priorityMap[normalized] ?? null;
+  return priorityMap[normalized] ?? "should";
 }
 
 function normalizeDateString(value: unknown, startDate: string, dayIndex: number) {
