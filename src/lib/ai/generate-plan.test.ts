@@ -80,6 +80,67 @@ describe("generatePlan", () => {
     expect(prompt).toContain("reviewMethod 控制在一句话以内");
     expect(prompt).toContain("不要生成“自己制定计划”");
     expect(prompt).toContain("输出要简洁");
+    expect(prompt).toContain("不要输出 http 或 https");
+    expect(prompt).toContain("前端会根据 searchKeywords 生成 B站和 YouTube 搜索链接");
+  });
+
+  it("adds LeetCode-specific generation guidance for algorithm goals", () => {
+    const messages = buildGeneratePlanMessages({
+      ...input,
+      title: "LeetCode 刷题计划",
+      goal: "系统练习 LeetCode 算法和数据结构",
+    });
+    const prompt = messages.map((message) => message.content).join("\n");
+
+    expect(prompt).toContain("题型");
+    expect(prompt).toContain("题目数量");
+    expect(prompt).toContain("难度");
+    expect(prompt).toContain("复杂度");
+    expect(prompt).toContain("复盘");
+  });
+
+  it("adds CET-specific generation guidance for English exam goals", () => {
+    const messages = buildGeneratePlanMessages({
+      ...input,
+      title: "六级冲刺",
+      goal: "准备英语六级考试",
+    });
+    const prompt = messages.map((message) => message.content).join("\n");
+
+    expect(prompt).toContain("单词");
+    expect(prompt).toContain("听力");
+    expect(prompt).toContain("阅读");
+    expect(prompt).toContain("写作");
+    expect(prompt).toContain("翻译");
+  });
+
+  it("adds math-specific generation guidance for finals goals", () => {
+    const messages = buildGeneratePlanMessages({
+      ...input,
+      title: "高数期末复习",
+      goal: "复习高数、微积分和线代",
+    });
+    const prompt = messages.map((message) => message.content).join("\n");
+
+    expect(prompt).toContain("知识点");
+    expect(prompt).toContain("例题");
+    expect(prompt).toContain("习题");
+    expect(prompt).toContain("错题");
+    expect(prompt).toContain("公式");
+  });
+
+  it("adds programming-specific generation guidance for C language goals", () => {
+    const messages = buildGeneratePlanMessages({
+      ...input,
+      title: "C 语言入门",
+      goal: "学习 C 语言指针和数组",
+    });
+    const prompt = messages.map((message) => message.content).join("\n");
+
+    expect(prompt).toContain("代码练习");
+    expect(prompt).toContain("小实验");
+    expect(prompt).toContain("调试复盘");
+    expect(prompt).toContain("术语总结");
   });
 
   it("parses fenced or noisy JSON without accepting invalid shapes", () => {

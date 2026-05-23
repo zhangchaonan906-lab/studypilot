@@ -103,12 +103,54 @@ type GeneratePlanPromptOptions = {
   schemaIssues?: string[];
 } | null;
 
+type LearningTemplateRule = {
+  keywords: string[];
+  instruction: string;
+};
+
+const learningTemplateRules: LearningTemplateRule[] = [
+  {
+    keywords: ["四级", "六级", "cet4", "cet6", "英语考试"],
+    instruction:
+      "四六级备考策略：每天任务应覆盖单词、听力、阅读、翻译或写作、真题或错题复盘；必须写清数量，例如背诵 30 个高频词、精听 1 段真题听力、完成 1 篇阅读、写 1 段翻译或作文提纲。",
+  },
+  {
+    keywords: ["高数", "数学", "期末", "微积分", "线代", "概率论"],
+    instruction:
+      "高数/期末复习策略：每天任务应包含知识点复习、例题拆解、习题训练、错题整理和公式回顾；必须具体到章节或知识点，并写清题量和错题复盘动作。",
+  },
+  {
+    keywords: ["leetcode", "算法", "刷题"],
+    instruction:
+      "LeetCode/算法策略：每天任务应写清题型、题目数量、难度、代码实现要求和复盘总结；题型可包含数组、链表、栈、队列、哈希表、二叉树、动态规划，并要求记录题解思路和时间/空间复杂度。",
+  },
+  {
+    keywords: ["c语言", "c 语言", "编程", "程序设计", "数据结构", "计算机组成原理", "操作系统"],
+    instruction:
+      "编程/计算机课程策略：每天任务应包含知识点学习、具体代码练习、小实验或小项目、调试复盘和术语总结；代码练习必须说明输入输出或完成标准，复盘要记录错误和解决方法。",
+  },
+];
+
+function buildLearningTemplateInstruction(input: GeneratePlanRequestWithDates) {
+  const searchableText = `${input.title} ${input.goal} ${input.preference ?? ""}`.toLowerCase();
+  const matchedInstructions = learningTemplateRules
+    .filter((rule) => rule.keywords.some((keyword) => searchableText.includes(keyword.toLowerCase())))
+    .map((rule) => rule.instruction);
+
+  if (matchedInstructions.length === 0) {
+    return "通用学习策略：按目标拆成具体知识点、练习数量、可检查产出和复盘动作，避免只写宽泛方向。";
+  }
+
+  return matchedInstructions.join("\n");
+}
+
 export function buildGeneratePlanMessages(
   input: GeneratePlanRequestWithDates,
   options: GeneratePlanPromptOptions = {}
 ) {
   const preference = input.preference || "无特殊偏好";
   const currentLevel = input.currentLevel || "未填写";
+  const learningTemplateInstruction = buildLearningTemplateInstruction(input);
   const retryInstruction = options?.retryForInvalidJson
     ? "上一次输出不是合法 JSON，请只返回严格 JSON，不要 Markdown，不要解释文字。"
     : options?.schemaIssues
@@ -140,6 +182,22 @@ export function buildGeneratePlanMessages(
         `每周休息天数：${input.restDaysPerWeek}`,
         `学习偏好：${preference}`,
         "",
+        "学习目标类型策略：",
+        learningTemplateInstruction,
+        "",
+        "任务质量要求：",
+        "1. 每个 task.content 必须包含明确学习内容、明确动作、明确产出或完成标准。",
+        "2. 禁止生成以下空泛任务：自己制定计划、认真学习、好好复习、复习相关知识、看一些资料、做一些题目、总结一下。",
+        "3. 不要写“复习高数极限知识。”，应该写“完成极限与连续章节 10 道基础题，整理 3 个常见错误到错题本。”",
+        "4. 不要写“学习 C 语言指针。”，应该写“阅读指针基础语法，完成 3 个指针变量和数组遍历练习，并记录 1 个容易混淆点。”",
+        "",
+        "资源建议要求：",
+        "1. resources 只提供 title、type、description、searchKeywords，不要生成具体 URL，不要输出 http 或 https，不要把 URL 放进 JSON。",
+        "2. type 可使用 video_search、practice_search、article_search、search_keyword。",
+        "3. title 要像资源名称，例如“高数极限与连续基础讲解”“英语六级听力真题精听”“LeetCode 动态规划入门”。",
+        "4. searchKeywords 要简洁，适合在 B站或 YouTube 搜索，例如“高数 极限 连续 期末复习”“六级 听力 真题 精听”“LeetCode 动态规划 入门”。",
+        "5. 前端会根据 searchKeywords 生成 B站和 YouTube 搜索链接。",
+        "",
         "硬性要求：",
         "1. 只输出严格 JSON，不要 Markdown，不要 ```json 代码块，不要解释文字，不要前缀或后缀。",
         "2. 内容必须是中文。",
@@ -149,7 +207,7 @@ export function buildGeneratePlanMessages(
         "6. priority 只能是 must、should、optional。",
         "7. 每 7 天安排一次复盘任务，任务内容或 reviewMethod 必须包含“复盘”。",
         "8. 资料推荐不要编造具体 URL，只提供 type、description 和 searchKeywords；只有第 1 天以及之后每 3 天生成 resources，也就是 dayIndex 为 1、4、7、10、13、16... 时可以填写 resources，其他日期 resources 返回空数组 []。",
-        "9. 任务必须具体可执行，不要生成“自己制定计划”“认真学习”“好好复习”这种空泛任务。",
+        "9. 任务必须具体可执行，不要生成“自己制定计划”“认真学习”“好好复习”“复习相关知识”“看一些资料”“做一些题目”“总结一下”这种空泛任务。",
         "10. summary、reviewMethod、resource description 都要简短；reviewMethod 控制在一句话以内。",
         "11. 每个 day 都必须包含 resources 字段；如果当天没有资料建议，resources 返回空数组 []。",
         "12. 每个 day 都必须包含 tasks 数组；每个 task 必须包含 content、priority、estimatedMinutes。",

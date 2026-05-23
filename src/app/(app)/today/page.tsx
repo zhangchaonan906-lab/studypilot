@@ -3,6 +3,7 @@ import { DailyReflectionForm } from "@/components/DailyReflectionForm";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { ProgressBar } from "@/components/ProgressBar";
+import { ResourceSearchLinks } from "@/components/ResourceSearchLinks";
 import { TaskCompletionToggle } from "@/components/TaskCompletionToggle";
 import { getTodayStudyDay } from "@/lib/study/data";
 
@@ -122,6 +123,9 @@ export default async function TodayPage({
 
                 <div className="sp-card">
                   <h3 className="sp-section-title">资料建议</h3>
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    点击后会打开对应平台的搜索结果页。
+                  </p>
                   {today.day.resources.length === 0 ? (
                     <p className="mt-3 text-sm leading-6 text-slate-600">
                       今天暂时没有资料建议。
@@ -136,11 +140,7 @@ export default async function TodayPage({
                               {resource.description}
                             </p>
                           ) : null}
-                          {resource.search_keywords ? (
-                            <p className="mt-3 text-xs font-semibold text-primary">
-                              搜索：{resource.search_keywords}
-                            </p>
-                          ) : null}
+                          <ResourceSearchLinks searchKeywords={resource.search_keywords} />
                         </div>
                       ))}
                     </div>

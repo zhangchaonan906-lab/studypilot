@@ -4,6 +4,7 @@ import { Badge } from "@/components/Badge";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { ProgressBar } from "@/components/ProgressBar";
+import { ResourceSearchLinks } from "@/components/ResourceSearchLinks";
 import { TaskCompletionToggle } from "@/components/TaskCompletionToggle";
 import { getPlanDetail } from "@/lib/study/data";
 import type { TaskPriority } from "@/lib/study/types";
@@ -148,6 +149,9 @@ export default async function PlanDetailPage({
                     </div>
                     <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                       <h4 className="text-sm font-bold text-ink">资料建议</h4>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        点击后会打开对应平台的搜索结果页。
+                      </p>
                       {day.resources.length === 0 ? (
                         <p className="mt-2 text-sm leading-6 text-slate-500">暂无资源</p>
                       ) : (
@@ -158,11 +162,7 @@ export default async function PlanDetailPage({
                               <p className="mt-1 text-sm leading-6 text-slate-500">
                                 {resource.description ?? "按关键词查找适合自己的资料。"}
                               </p>
-                              {resource.search_keywords ? (
-                                <p className="mt-2 text-xs font-semibold text-primary">
-                                  搜索：{resource.search_keywords}
-                                </p>
-                              ) : null}
+                              <ResourceSearchLinks searchKeywords={resource.search_keywords} />
                             </div>
                           ))}
                         </div>
