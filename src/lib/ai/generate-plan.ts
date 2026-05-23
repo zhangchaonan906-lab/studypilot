@@ -12,7 +12,7 @@ export async function generatePlan(
   input: GeneratePlanRequestWithDates,
   invokeAI: InvokeAI = callAIJson
 ): Promise<GeneratedPlan> {
-  const rawContent = await invokeAI(buildGeneratePlanMessages(input));
+  const rawContent = await invokeAI(buildGeneratePlanMessages(input), { maxTokens: 6500 });
   const parsedJson = parseAIJson(rawContent);
   const parsedPlan = generatedPlanSchema.safeParse(parsedJson);
 
@@ -42,7 +42,7 @@ export function buildGeneratePlanMessages(input: GeneratePlanRequestWithDates) {
     {
       role: "system" as const,
       content:
-        "你是 StudyPilot 的中文学习计划生成器。你必须只输出严格 JSON，不要输出 Markdown、解释文字或代码块。",
+        "你是 StudyPilot 的中文学习计划生成器。你必须只输出严格 JSON，不要输出 Markdown、解释文字或代码块。输出要简洁，不要长篇解释。",
     },
     {
       role: "user" as const,
@@ -61,13 +61,14 @@ export function buildGeneratePlanMessages(input: GeneratePlanRequestWithDates) {
         "硬性要求：",
         "1. 输出必须是严格 JSON，不要 Markdown。",
         "2. 内容必须是中文。",
-        "3. days 从 dayIndex=1 开始，日期从开始日期逐日递增，不超过截止日期。",
-        "4. 每天任务数量 2 到 5 个。",
+        "3. 公测版当前最多生成 30 天计划；days 从 dayIndex=1 开始，日期从开始日期逐日递增，不超过截止日期。",
+        "4. 每天任务数量 2 到 4 个。",
         "5. 每天任务 estimatedMinutes 总和不能超过每天可学习时间。",
         "6. priority 只能是 must、should、optional。",
         "7. 每 7 天安排一次复盘任务，任务内容或 reviewMethod 必须包含“复盘”。",
-        "8. 资料推荐不要编造具体 URL，只提供 type、description 和 searchKeywords。",
+        "8. 资料推荐不要编造具体 URL，只提供 type、description 和 searchKeywords；每 3 天生成一次 resources，只在 dayIndex 为 1、4、7、10... 的天数填写，其他天 resources 为空数组。",
         "9. 任务必须具体可执行，不要写“认真学习”“好好复习”。",
+        "10. summary、reviewMethod、resource description 都要简短；reviewMethod 控制在一句话以内。",
         "",
         "JSON 结构必须完全符合：",
         JSON.stringify({

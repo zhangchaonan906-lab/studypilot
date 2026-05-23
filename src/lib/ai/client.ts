@@ -7,6 +7,10 @@ type ChatMessage = {
   content: string;
 };
 
+type AIRequestOptions = {
+  maxTokens?: number;
+};
+
 export type AIClientConfig = {
   provider: AIProvider;
   apiKey: string;
@@ -50,7 +54,7 @@ export function getAIClientConfig(env: EnvLike = process.env): AIClientConfig {
   throw new Error("AI_PROVIDER 只支持 openai 或 deepseek。");
 }
 
-export async function callAIJson(messages: ChatMessage[]) {
+export async function callAIJson(messages: ChatMessage[], options: AIRequestOptions = {}) {
   const config = getAIClientConfig();
   const endpoint = `${config.baseUrl.replace(/\/$/, "")}/chat/completions`;
   const response = await fetch(endpoint, {
@@ -63,7 +67,7 @@ export async function callAIJson(messages: ChatMessage[]) {
       model: config.model,
       messages,
       temperature: 0.3,
-      max_tokens: 12000,
+      max_tokens: options.maxTokens ?? 8000,
       response_format: {
         type: "json_object",
       },

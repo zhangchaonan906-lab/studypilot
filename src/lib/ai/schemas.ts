@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const PUBLIC_BETA_MAX_PLAN_DAYS = 30;
+
 const dateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "日期格式必须是 YYYY-MM-DD");
 
 export const generatePlanRequestSchema = z.object({
@@ -26,19 +28,19 @@ const resourceSchema = z.object({
 });
 
 const daySchema = z.object({
-  dayIndex: z.number().int().min(1).max(90),
+  dayIndex: z.number().int().min(1).max(PUBLIC_BETA_MAX_PLAN_DAYS),
   date: dateStringSchema,
   title: z.string().trim().min(1),
   summary: z.string().trim().nullable().optional(),
   reviewMethod: z.string().trim().nullable().optional(),
-  tasks: z.array(taskSchema).min(2).max(5),
-  resources: z.array(resourceSchema).min(0).max(5),
+  tasks: z.array(taskSchema).min(2).max(4),
+  resources: z.array(resourceSchema).min(0).max(3),
 });
 
 export const generatedPlanSchema = z.object({
   title: z.string().trim().min(1),
   overview: z.string().trim().min(1),
-  days: z.array(daySchema).min(1).max(90),
+  days: z.array(daySchema).min(1).max(PUBLIC_BETA_MAX_PLAN_DAYS),
 });
 
 export const weeklySummaryRequestSchema = z.object({
@@ -95,7 +97,7 @@ export function calculatePlanDays(deadline: string, currentDate = new Date()) {
     (deadlineDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)
   );
 
-  return Math.min(Math.max(diffDays + 1, 0), 90);
+  return Math.min(Math.max(diffDays + 1, 0), PUBLIC_BETA_MAX_PLAN_DAYS);
 }
 
 export function validateGeneratePlanRequest(
@@ -234,6 +236,13 @@ export function validateGeneratedPlan(
           error: `AI 返回的第 ${day.dayIndex} 天缺少复盘安排。`,
         };
       }
+    }
+
+    if (day.dayIndex % 3 !== 1 && day.resources.length > 0) {
+      return {
+        ok: false,
+        error: `AI 返回的第 ${day.dayIndex} 天不应生成资料建议，公测版每 3 天生成一次资料。`,
+      };
     }
   }
 

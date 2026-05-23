@@ -54,6 +54,8 @@ describe("generateWeeklySummary", () => {
     expect(prompt).toContain("严格 JSON");
     expect(prompt).toContain("本周任务完成率：75%");
     expect(prompt).toContain("不要输出 Markdown");
+    expect(prompt).toContain("每个字段控制在 80 字以内");
+    expect(prompt).toContain("避免长篇解释");
   });
 
   it("validates AI weekly summary output before returning", async () => {

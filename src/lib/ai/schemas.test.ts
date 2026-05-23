@@ -23,7 +23,7 @@ describe("generate plan request validation", () => {
     );
 
     expect(result.success).toBe(true);
-    expect(calculatePlanDays("2026-06-30", currentDate)).toBe(39);
+    expect(calculatePlanDays("2026-06-30", currentDate)).toBe(30);
   });
 
   it("rejects invalid request fields with Chinese messages", () => {
@@ -43,8 +43,8 @@ describe("generate plan request validation", () => {
     ).toBe(false);
   });
 
-  it("caps generated days at 90", () => {
-    expect(calculatePlanDays("2026-12-31", new Date(2026, 4, 23))).toBe(90);
+  it("caps generated days at 30 for public beta", () => {
+    expect(calculatePlanDays("2026-12-31", new Date(2026, 4, 23))).toBe(30);
   });
 });
 
@@ -98,6 +98,37 @@ describe("generated plan schema", () => {
               content: "认真学习",
               priority: "urgent",
               estimatedMinutes: 30,
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(generatedPlanSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it("rejects more than four tasks per day", () => {
+    const invalid = {
+      ...generatedPlan,
+      days: [
+        {
+          ...generatedPlan.days[0],
+          tasks: [
+            ...generatedPlan.days[0].tasks,
+            {
+              content: "完成 4 道导数应用题并标记错因",
+              priority: "should",
+              estimatedMinutes: 10,
+            },
+            {
+              content: "整理 2 个常见解题模板",
+              priority: "optional",
+              estimatedMinutes: 10,
+            },
+            {
+              content: "复述今天的关键公式",
+              priority: "optional",
+              estimatedMinutes: 5,
             },
           ],
         },

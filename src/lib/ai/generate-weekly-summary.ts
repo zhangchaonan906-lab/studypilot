@@ -39,7 +39,9 @@ export async function generateWeeklySummary(
   input: WeeklySummaryAIInput,
   invokeAI: InvokeAI = callAIJson
 ): Promise<GeneratedWeeklySummary> {
-  const rawContent = await invokeAI(buildGenerateWeeklySummaryMessages(input));
+  const rawContent = await invokeAI(buildGenerateWeeklySummaryMessages(input), {
+    maxTokens: 1600,
+  });
   const parsedJson = parseAIJson(rawContent);
   const parsedSummary = generatedWeeklySummarySchema.safeParse(parsedJson);
 
@@ -55,7 +57,7 @@ export function buildGenerateWeeklySummaryMessages(input: WeeklySummaryAIInput) 
     {
       role: "system" as const,
       content:
-        "你是 StudyPilot 的中文学习教练。你必须只输出严格 JSON，不要输出 Markdown、解释文字或代码块。",
+        "你是 StudyPilot 的中文学习教练。你必须只输出严格 JSON，不要输出 Markdown、解释文字或代码块。回答要简洁，避免长篇解释。",
     },
     {
       role: "user" as const,
@@ -82,6 +84,7 @@ export function buildGenerateWeeklySummaryMessages(input: WeeklySummaryAIInput) 
         "4. weaknesses 要指出 1 到 3 个需要改进的问题。",
         "5. nextWeekAdvice 要给出下周可执行建议，不要泛泛而谈。",
         "6. 不要编造不存在的数据。",
+        "7. 每个字段控制在 80 字以内，避免长篇解释。",
         "",
         "JSON 结构必须完全符合：",
         JSON.stringify({

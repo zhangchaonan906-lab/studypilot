@@ -22,6 +22,10 @@ describe("generatePlan", () => {
     expect(prompt).toContain("内容必须是中文");
     expect(prompt).toContain("每 7 天安排一次复盘任务");
     expect(prompt).toContain("不要编造具体 URL");
+    expect(prompt).toContain("每天任务数量 2 到 4 个");
+    expect(prompt).toContain("每 3 天生成一次 resources");
+    expect(prompt).toContain("reviewMethod 控制在一句话以内");
+    expect(prompt).toContain("输出要简洁");
   });
 
   it("parses fenced or noisy JSON without accepting invalid shapes", () => {
