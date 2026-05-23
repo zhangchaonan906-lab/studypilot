@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/Badge";
+import { DeletePlanButton } from "@/components/DeletePlanButton";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { PlanCard } from "@/components/PlanCard";
@@ -77,6 +78,10 @@ export default async function DashboardPage() {
                 <Link href="/plans/new" className="btn-secondary">
                   新建计划
                 </Link>
+                <DeletePlanButton
+                  planId={dashboard.currentPlan.id}
+                  planTitle={dashboard.currentPlan.title}
+                />
               </div>
             </div>
             <div className="mt-6">

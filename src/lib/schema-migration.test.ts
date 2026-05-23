@@ -69,4 +69,12 @@ describe("initial Supabase schema migration", () => {
       expect(sql).toContain(`create index if not exists ${indexName}`);
     }
   });
+
+  it("cascades deleted plans to plan-owned study data", () => {
+    const sql = readMigration();
+
+    expect(sql).toContain("plan_id uuid not null references public.plans(id) on delete cascade");
+    expect(sql).toContain("plan_day_id uuid not null references public.plan_days(id) on delete cascade");
+    expect(sql).toContain("task_id uuid references public.tasks(id) on delete set null");
+  });
 });

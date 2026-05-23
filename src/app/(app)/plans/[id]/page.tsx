@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/Badge";
+import { DeletePlanButton } from "@/components/DeletePlanButton";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -53,9 +54,16 @@ export default async function PlanDetailPage({
               {plan.overview ?? "这个计划会按日期展示每日任务、资料建议和复习方法。"}
             </p>
           </div>
-          <Link href="/today" className="btn-primary">
-            查看今日任务
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row lg:items-center">
+            <Link href="/today" className="btn-primary">
+              查看今日任务
+            </Link>
+            <DeletePlanButton
+              planId={plan.id}
+              planTitle={plan.title}
+              redirectAfterDelete
+            />
+          </div>
         </div>
         <div className="mt-6 grid gap-3 md:grid-cols-3">
           <div className="rounded-2xl bg-slate-50 p-4">

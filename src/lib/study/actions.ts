@@ -5,9 +5,11 @@ import { redirect } from "next/navigation";
 import {
   createMistakeReview,
   createPlan,
+  deletePlan,
   updateTaskCompletion,
   upsertDailyReflection,
 } from "./data";
+import { PLAN_DELETE_FORBIDDEN_ERROR } from "./plan-deletion";
 import {
   parseCreatePlanFormData,
   parseDailyReflectionFormData,
@@ -54,6 +56,36 @@ export async function updateTaskCompletionAction(taskId: string, isCompleted: bo
   } catch {
     return { error: "任务状态更新失败，请稍后重试。" };
   }
+}
+
+export async function deletePlanAction(
+  planId: string,
+  redirectAfterDelete = false
+): Promise<ActionState> {
+  try {
+    await deletePlan(planId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+
+    return {
+      error:
+        message === PLAN_DELETE_FORBIDDEN_ERROR
+          ? PLAN_DELETE_FORBIDDEN_ERROR
+          : "删除失败，请稍后重试。",
+    };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/today");
+  revalidatePath("/review");
+  revalidatePath("/weekly");
+  revalidatePath(`/plans/${planId}`);
+
+  if (redirectAfterDelete) {
+    redirect("/dashboard");
+  }
+
+  return { success: "学习计划已删除。" };
 }
 
 export async function createMistakeReviewAction(formData: FormData) {

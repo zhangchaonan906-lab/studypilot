@@ -9,6 +9,7 @@ import {
   getDaysUntilDeadline,
   getPlanWeekIndex,
 } from "./metrics";
+import { deletePlanForUser } from "./plan-deletion";
 import { updateTaskCompletionForUser } from "./task-completion";
 import type {
   DashboardData,
@@ -83,6 +84,11 @@ export async function createPlan(input: PlanInsert) {
 
   throwIfError(error, "创建学习计划失败");
   return data as Plan;
+}
+
+export async function deletePlan(planId: string) {
+  const { supabase, userId } = await getAuthenticatedContext();
+  return deletePlanForUser(supabase, userId, planId);
 }
 
 export async function getPlanDetail(planId: string): Promise<PlanDetail | null> {
