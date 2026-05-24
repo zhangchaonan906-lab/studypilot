@@ -8,6 +8,7 @@ const DAILY_LIMIT = 5;
 const PER_MINUTE_LIMIT = 2;
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient();
