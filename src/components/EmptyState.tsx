@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StudyPilotLogo } from "./StudyPilotLogo";
 
 export function EmptyState({
   title,
@@ -13,8 +14,8 @@ export function EmptyState({
 }) {
   return (
     <div className="rounded-2xl border border-dashed border-slate-300 bg-white/90 p-6 text-center shadow-sm sm:p-8">
-      <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-sm font-bold text-primary">
-        SP
+      <div className="mx-auto mb-4 flex justify-center">
+        <StudyPilotLogo size={44} />
       </div>
       <h2 className="text-lg font-bold text-ink">{title}</h2>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">{description}</p>

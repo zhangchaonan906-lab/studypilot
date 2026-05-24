@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { mockPlans, todayTasks } from "@/lib/site";
 import { ProgressBar } from "@/components/ProgressBar";
+import { StudyPilotLogo } from "@/components/StudyPilotLogo";
 
 const featureCards = [
   {
@@ -28,10 +29,7 @@ export default function HomePage() {
       <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-sm font-bold text-white shadow-sm">
-              SP
-            </span>
-            <span className="font-bold text-ink">StudyPilot</span>
+            <StudyPilotLogo size={40} showText />
           </Link>
           <Link href="/login" className="btn-secondary px-4 py-2">
             登录

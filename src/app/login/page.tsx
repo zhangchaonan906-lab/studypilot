@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LoginForm } from "@/components/LoginForm";
+import { StudyPilotLogo } from "@/components/StudyPilotLogo";
 
 export default async function LoginPage({
   searchParams,
@@ -14,10 +15,7 @@ export default async function LoginPage({
     <main className="min-h-screen bg-mist px-4 py-8 sm:py-10">
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl flex-col justify-start pt-4 lg:justify-center lg:pt-0">
         <Link href="/" className="mb-8 flex w-fit items-center gap-3 text-sm font-semibold text-ink">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-sm">
-            SP
-          </span>
-          StudyPilot
+          <StudyPilotLogo size={40} showText />
         </Link>
         <div className="grid min-w-0 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_430px]">
           <section className="hidden lg:block">

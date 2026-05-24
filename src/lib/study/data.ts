@@ -48,7 +48,7 @@ async function getAuthenticatedContext() {
     redirect("/login");
   }
 
-  return { supabase, userId: user.id };
+  return { supabase, userId: user.id, userEmail: user.email ?? null };
 }
 
 function throwIfError(error: { message: string } | null, fallback: string) {
@@ -68,6 +68,23 @@ export async function listActivePlans() {
 
   throwIfError(error, "读取学习计划失败");
   return (data ?? []) as Plan[];
+}
+
+export async function getAppShellData() {
+  const { supabase, userId, userEmail } = await getAuthenticatedContext();
+  const { data, error } = await supabase
+    .from("plans")
+    .select("id,title")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
+
+  throwIfError(error, "读取侧边栏学习计划失败");
+
+  return {
+    userEmail,
+    activePlans: (data ?? []) as Pick<Plan, "id" | "title">[],
+  };
 }
 
 export async function getCurrentActivePlan() {
