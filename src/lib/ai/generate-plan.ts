@@ -503,7 +503,15 @@ function logAIPlanParseFailure(rawContent: string, attempt: number) {
 }
 
 function logAIPlanSchemaFailure(issues: string[], rawContent: string, attempt: number) {
-  console.warn(`[StudyPilot] AI plan zod validation failed on attempt ${attempt}. Issues:`, issues);
+  console.warn(
+    `[StudyPilot] AI plan zod validation failed on attempt ${attempt}. issueCount=${issues.length}. Issues:`,
+    issues
+  );
+
+  if (process.env.NODE_ENV !== "development") {
+    return;
+  }
+
   console.warn(
     `[StudyPilot] AI plan zod validation raw prefix on attempt ${attempt}:`,
     rawContent.slice(0, 500)

@@ -4,6 +4,7 @@ import {
   getAuthRedirectPath,
   getAuthErrorMessage,
   isProtectedPath,
+  sanitizeRedirectPath,
   submitAuthCredentials,
   validateAuthCredentials,
 } from "./auth";
@@ -27,6 +28,16 @@ describe("auth route rules", () => {
     expect(getAuthRedirectPath("/plans/abc", false)).toBe("/login");
     expect(getAuthRedirectPath("/login", true)).toBe("/dashboard");
     expect(getAuthRedirectPath("/", false)).toBeNull();
+  });
+
+  it("sanitizes auth callback redirect paths to same-site relative paths", () => {
+    expect(sanitizeRedirectPath(null)).toBe("/dashboard");
+    expect(sanitizeRedirectPath("")).toBe("/dashboard");
+    expect(sanitizeRedirectPath("/dashboard")).toBe("/dashboard");
+    expect(sanitizeRedirectPath("/plans/new")).toBe("/plans/new");
+    expect(sanitizeRedirectPath("dashboard")).toBe("/dashboard");
+    expect(sanitizeRedirectPath("//evil.com")).toBe("/dashboard");
+    expect(sanitizeRedirectPath("https://evil.com")).toBe("/dashboard");
   });
 });
 

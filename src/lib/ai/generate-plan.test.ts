@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildGeneratePlanMessages,
   generatePlan,
@@ -17,6 +17,13 @@ const input = {
   startDate: "2026-05-23",
   maxDays: 2,
 };
+
+const originalNodeEnv = process.env.NODE_ENV;
+
+afterEach(() => {
+  process.env.NODE_ENV = originalNodeEnv;
+  vi.restoreAllMocks();
+});
 
 function buildValidPlan() {
   return {
@@ -400,6 +407,28 @@ describe("generatePlan", () => {
     expect(plan.title).toBe("高数两天计划");
     expect(calls).toBe(2);
     expect(prompts[1]).toContain("上一次 JSON 结构没有通过校验");
+  });
+
+  it("does not log raw AI response prefixes in production when schema validation fails", async () => {
+    process.env.NODE_ENV = "production";
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    let calls = 0;
+
+    await generatePlan(input, async () => {
+      calls += 1;
+
+      return calls === 1
+        ? JSON.stringify({
+            title: "会出现在 AI 原始内容里的敏感学习目标",
+          })
+        : JSON.stringify(buildValidPlan());
+    });
+
+    const logText = warnSpy.mock.calls.flat().join("\n");
+    expect(logText).toContain("AI plan zod validation failed");
+    expect(logText).toContain("issueCount");
+    expect(logText).not.toContain("raw prefix");
+    expect(logText).not.toContain("会出现在 AI 原始内容里的敏感学习目标");
   });
 
   it("throws a stable Chinese error when JSON parsing still fails after retry", async () => {

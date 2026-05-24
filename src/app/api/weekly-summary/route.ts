@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { generateWeeklySummary } from "@/lib/ai/generate-weekly-summary";
+import {
+  checkAiUsageRateLimit,
+  type AiUsageRateLimitClient,
+  weeklySummaryRateLimitRule,
+} from "@/lib/ai/rate-limit";
 import { validateWeeklySummaryRequest } from "@/lib/ai/schemas";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { calculateCompletionRate } from "@/lib/study/metrics";
@@ -27,6 +32,21 @@ export async function POST(request: Request) {
 
   if (userError || !user) {
     return NextResponse.json({ error: "请先登录后再生成周总结。" }, { status: 401 });
+  }
+
+  const rateLimit = await checkAiUsageRateLimit({
+    supabase: supabase as unknown as AiUsageRateLimitClient,
+    userId: user.id,
+    endpoint: AI_USAGE_ENDPOINT,
+    rule: weeklySummaryRateLimitRule,
+  });
+
+  if (!rateLimit.allowed) {
+    await recordAiUsageLog(supabase, user.id, false);
+    return NextResponse.json(
+      { error: rateLimit.error },
+      { status: rateLimit.status }
+    );
   }
 
   let body: unknown;

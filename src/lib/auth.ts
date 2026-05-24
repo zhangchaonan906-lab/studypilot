@@ -24,6 +24,17 @@ export function getAuthRedirectPath(pathname: string, isAuthenticated: boolean) 
   return null;
 }
 
+export function sanitizeRedirectPath(nextPath: string | null | undefined) {
+  const fallback = "/dashboard";
+  const path = nextPath?.trim();
+
+  if (!path || !path.startsWith("/") || path.startsWith("//")) {
+    return fallback;
+  }
+
+  return path;
+}
+
 export type AuthMode = "sign-in" | "sign-up";
 
 export const authValidationMessages = {
