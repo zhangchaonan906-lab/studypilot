@@ -19,9 +19,11 @@ type SidebarNavigationProps = {
 
 const studyToolLinks = [
   { href: "/today", icon: "🎯", label: "今日任务" },
+  { href: "/schedule", icon: "📅", label: "课程表" },
   { href: "/review", icon: "❌", label: "错题复习" },
   { href: "/weekly", icon: "📊", label: "周总结" },
   { href: "/focus", icon: "⏱️", label: "深度学习计时" },
+  { href: "/checkin", icon: "🐾", label: "猫爪打卡" },
   { href: "/resources", icon: "🌐", label: "资料资源" },
 ];
 

@@ -181,3 +181,38 @@ export type WeeklyPageData = {
     mistakeCount: number;
   } | null;
 };
+
+export type TimetableEntry = {
+  id: string;
+  user_id: string;
+  course_name: string;
+  weekday: number;
+  start_time: string;
+  end_time: string;
+  location: string | null;
+  teacher: string | null;
+  note: string | null;
+  color: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+export type TimetableEntryInsert = Pick<
+  TimetableEntry,
+  "course_name" | "weekday" | "start_time" | "end_time" | "location" | "teacher" | "note" | "color"
+>;
+
+export type TimetableEntryUpdate = Partial<TimetableEntryInsert>;
+
+export type DailyCheckin = {
+  id: string;
+  user_id: string;
+  checkin_date: string;
+  created_at: string | null;
+};
+
+export type CheckinStats = {
+  monthTotal: number;
+  streak: number;
+  todayCheckedIn: boolean;
+};

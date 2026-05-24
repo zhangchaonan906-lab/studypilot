@@ -31,9 +31,11 @@ describe("sidebar navigation shell", () => {
     expect(source).toContain("我的学习计划");
     expect(source).toContain("暂无学习计划");
     expect(source).toContain("今日任务");
+    expect(source).toContain("课程表");
     expect(source).toContain("错题复习");
     expect(source).toContain("周总结");
     expect(source).toContain("深度学习计时");
+    expect(source).toContain("猫爪打卡");
     expect(source).toContain("资料资源");
     expect(source).toContain("计划模板");
     expect(source).toContain("计划市集");
@@ -57,6 +59,8 @@ describe("sidebar navigation shell", () => {
     expect(isProtectedPath("/resources")).toBe(true);
     expect(isProtectedPath("/templates")).toBe(true);
     expect(isProtectedPath("/marketplace")).toBe(true);
+    expect(isProtectedPath("/schedule")).toBe(true);
+    expect(isProtectedPath("/checkin")).toBe(true);
   });
 });
 
@@ -160,5 +164,29 @@ describe("sidebar delete behavior", () => {
 
   it("reuses existing deletePlanAction", () => {
     expect(sidebarSource).toContain("deletePlanAction");
+  });
+});
+
+describe("sidebar navigation for schedule and checkin", () => {
+  const sidebarSource = readFileSync(
+    join(rootDir, "src", "components", "SidebarNavigation.tsx"),
+    "utf8",
+  );
+
+  it("has course schedule entry with calendar icon", () => {
+    expect(sidebarSource).toContain('href: "/schedule"');
+    expect(sidebarSource).toContain("📅");
+    expect(sidebarSource).toContain("课程表");
+  });
+
+  it("has cat paw checkin entry with paw icon", () => {
+    expect(sidebarSource).toContain('href: "/checkin"');
+    expect(sidebarSource).toContain("🐾");
+    expect(sidebarSource).toContain("猫爪打卡");
+  });
+
+  it("supports active path highlighting for schedule and checkin", () => {
+    expect(sidebarSource).toContain("isActivePath");
+    expect(sidebarSource).toContain("startsWith");
   });
 });
