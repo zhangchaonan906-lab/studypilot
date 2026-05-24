@@ -6,6 +6,16 @@ import { isProtectedPath } from "./auth";
 const rootDir = process.cwd();
 
 describe("sidebar navigation shell", () => {
+  it("uses an independent main content scroll container", () => {
+    const appShellSource = readFileSync(
+      join(rootDir, "src", "components", "AppShell.tsx"),
+      "utf8"
+    );
+
+    expect(appShellSource).toContain("h-screen overflow-hidden");
+    expect(appShellSource).toContain("flex-1 overflow-y-auto");
+  });
+
   it("renders the required sidebar entries and empty plan state", () => {
     const sidebarPath = join(rootDir, "src", "components", "SidebarNavigation.tsx");
 
@@ -22,6 +32,18 @@ describe("sidebar navigation shell", () => {
     expect(source).toContain("资料资源");
     expect(source).toContain("计划模板");
     expect(source).toContain("计划市集");
+  });
+
+  it("keeps sidebar height fixed and scrolls only the plan list area", () => {
+    const source = readFileSync(
+      join(rootDir, "src", "components", "SidebarNavigation.tsx"),
+      "utf8"
+    );
+
+    expect(source).toContain("hidden h-screen w-72");
+    expect(source).toContain("data-sidebar-plan-list");
+    expect(source).toContain("min-h-0 flex-1 overflow-y-auto");
+    expect(source).toContain("shrink-0 border-t");
   });
 
   it("keeps the new workspace routes protected", () => {
