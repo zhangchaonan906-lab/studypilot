@@ -11,9 +11,14 @@ describe("sidebar navigation shell", () => {
       join(rootDir, "src", "components", "AppShell.tsx"),
       "utf8"
     );
+    const appLayoutSource = readFileSync(
+      join(rootDir, "src", "app", "(app)", "layout.tsx"),
+      "utf8"
+    );
 
     expect(appShellSource).toContain("h-screen overflow-hidden");
     expect(appShellSource).toContain("flex-1 overflow-y-auto");
+    expect(appLayoutSource).toContain('dynamic = "force-dynamic"');
   });
 
   it("renders the required sidebar entries and empty plan state", () => {
@@ -34,7 +39,7 @@ describe("sidebar navigation shell", () => {
     expect(source).toContain("计划市集");
   });
 
-  it("keeps sidebar height fixed and scrolls only the plan list area", () => {
+  it("keeps sidebar fixed while preserving visible plan names", () => {
     const source = readFileSync(
       join(rootDir, "src", "components", "SidebarNavigation.tsx"),
       "utf8"
@@ -42,7 +47,8 @@ describe("sidebar navigation shell", () => {
 
     expect(source).toContain("hidden h-screen w-72");
     expect(source).toContain("data-sidebar-plan-list");
-    expect(source).toContain("min-h-0 flex-1 overflow-y-auto");
+    expect(source).toContain("max-h-48 overflow-y-auto");
+    expect(source).toContain("data-sidebar-scroll-area");
     expect(source).toContain("shrink-0 border-t");
   });
 

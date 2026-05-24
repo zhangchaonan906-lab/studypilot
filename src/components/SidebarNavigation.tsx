@@ -129,32 +129,29 @@ function SidebarContent({
         新建计划
       </Link>
 
-      <section className="mt-5 flex min-h-0 flex-1 flex-col">
-        <h2 className="mb-2 px-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-400">
-          我的学习计划
-        </h2>
-        <div data-sidebar-plan-list className="min-h-0 flex-1 overflow-y-auto pr-1">
-          {plans.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-sm leading-6 text-slate-500">
-              暂无学习计划
-            </p>
-          ) : (
-            <div className="space-y-1.5">
-              {plans.map((plan) => (
-                <SidebarLink
-                  key={plan.id}
-                  href={`/plans/${plan.id}`}
-                  label={plan.title}
-                  active={isActivePath(pathname, `/plans/${plan.id}`)}
-                  onNavigate={onNavigate}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+      <div data-sidebar-scroll-area className="mt-5 min-h-0 flex-1 overflow-y-auto pr-1">
+        <SidebarSection title="我的学习计划">
+          <div data-sidebar-plan-list className="max-h-48 overflow-y-auto pr-1">
+            {plans.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-sm leading-6 text-slate-500">
+                暂无学习计划
+              </p>
+            ) : (
+              <div className="space-y-1.5">
+                {plans.map((plan) => (
+                  <SidebarLink
+                    key={plan.id}
+                    href={`/plans/${plan.id}`}
+                    label={plan.title}
+                    active={isActivePath(pathname, `/plans/${plan.id}`)}
+                    onNavigate={onNavigate}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </SidebarSection>
 
-      <div className="mt-5 shrink-0">
         <SidebarSection title="学习工具">
           <div className="space-y-1.5">
             {studyToolLinks.map((link) => (
@@ -169,9 +166,7 @@ function SidebarContent({
             ))}
           </div>
         </SidebarSection>
-      </div>
 
-      <div className="mt-5 shrink-0">
         <SidebarSection title="探索">
           <div className="space-y-1.5">
             {exploreLinks.map((link) => (
