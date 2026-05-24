@@ -9,12 +9,14 @@ export function TaskCompletionToggle({
   initialCompleted,
   content,
   meta,
+  estimatedMinutes,
   variant = "card",
 }: {
   taskId: string;
   initialCompleted: boolean;
   content: string;
   meta?: string;
+  estimatedMinutes?: number;
   variant?: "card" | "compact";
 }) {
   const [isCompleted, setIsCompleted] = useState(initialCompleted);
@@ -99,7 +101,7 @@ export function TaskCompletionToggle({
       </button>
       {!isCompleted ? (
         <Link
-          href={`/focus?goal=${encodeURIComponent(content)}`}
+          href={`/focus?goal=${encodeURIComponent(content)}${estimatedMinutes && estimatedMinutes > 0 ? `&minutes=${estimatedMinutes}` : ""}`}
           className="ml-10 inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary transition hover:border-primary hover:bg-indigo-50"
         >
           <span aria-hidden="true">⏱</span>

@@ -297,4 +297,95 @@ describe("focus-timer linkage with today tasks", () => {
     expect(toggleSource).toContain("/focus?goal=");
     expect(toggleSource).toContain("!isCompleted");
   });
+
+  it("includes estimatedMinutes in focus link when available", () => {
+    const toggleSource = readFileSync(
+      join(rootDir, "src", "components", "TaskCompletionToggle.tsx"),
+      "utf8",
+    );
+    expect(toggleSource).toContain("estimatedMinutes");
+    expect(toggleSource).toContain("&minutes=");
+  });
+
+  it("accepts initialMinutes prop in FocusTimer", () => {
+    const timerSource = readFileSync(
+      join(rootDir, "src", "components", "FocusTimer.tsx"),
+      "utf8",
+    );
+    expect(timerSource).toContain("initialMinutes?: number");
+    expect(timerSource).toContain("initialMinutes && initialMinutes >= 1");
+  });
+
+  it("reads minutes searchParam in /focus page", () => {
+    const pageSource = readFileSync(
+      join(rootDir, "src", "app", "(app)", "focus", "page.tsx"),
+      "utf8",
+    );
+    expect(pageSource).toContain("minutes");
+    expect(pageSource).toContain("initialMinutes={initialMinutes}");
+  });
+
+  it("passes estimatedMinutes from /today to TaskCompletionToggle", () => {
+    const todaySource = readFileSync(
+      join(rootDir, "src", "app", "(app)", "today", "page.tsx"),
+      "utf8",
+    );
+    expect(todaySource).toContain("estimatedMinutes={task.estimated_minutes");
+  });
+});
+
+describe("NewPlanForm auto-estimate", () => {
+  const formSource = readFileSync(
+    join(rootDir, "src", "components", "NewPlanForm.tsx"),
+    "utf8",
+  );
+
+  it("replaces manual dailyMinutes input with auto-estimate card", () => {
+    expect(formSource).not.toContain("建议先填能稳定坚持的时间");
+    expect(formSource).toContain("自动估算每日学习时间");
+    expect(formSource).toContain("填写学习目标和计划天数后自动估算");
+  });
+
+  it("shows intensity and sprint warning", () => {
+    expect(formSource).toContain("计划强度");
+    expect(formSource).toContain("当前计划强度较高");
+  });
+
+  it("keeps dailyMinutes as hidden field for form submission", () => {
+    expect(formSource).toContain('type="hidden"');
+    expect(formSource).toContain('name="daily_minutes"');
+  });
+
+  it("imports time estimation function", () => {
+    expect(formSource).toContain("estimateDailyStudyMinutes");
+  });
+});
+
+describe("backend dailyMinutes enforcement", () => {
+  it("recalculates dailyMinutes in validateGeneratePlanRequest", () => {
+    const schemaSource = readFileSync(
+      join(rootDir, "src", "lib", "ai", "schemas.ts"),
+      "utf8",
+    );
+    expect(schemaSource).toContain("estimateDailyStudyMinutes");
+    expect(schemaSource).toContain("dailyMinutes: backendDailyMinutes.dailyMinutes");
+  });
+
+  it("normalizes task estimatedMinutes with clamping", () => {
+    const genSource = readFileSync(
+      join(rootDir, "src", "lib", "ai", "generate-plan.ts"),
+      "utf8",
+    );
+    expect(genSource).toContain("normalizeTaskMinutes");
+    expect(genSource).toContain("Math.max(10, Math.min(90");
+  });
+
+  it("includes task time allocation requirements in AI prompt", () => {
+    const genSource = readFileSync(
+      join(rootDir, "src", "lib", "ai", "generate-plan.ts"),
+      "utf8",
+    );
+    expect(genSource).toContain("任务时间分配要求");
+    expect(genSource).toContain("±20%");
+  });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProgressLoadingCard } from "./ProgressLoadingCard";
 import {
@@ -15,6 +15,10 @@ import {
   calculateDeadlineDate,
   getDefaultStartDate,
 } from "@/lib/study/plan-dates";
+import {
+  estimateDailyStudyMinutes,
+  type StudyTimeEstimateResult,
+} from "@/lib/study/time-estimation";
 
 const preferences = ["每天短时高频", "周末集中学习", "多做题", "多看讲解", "需要复盘提醒"];
 const publicBetaMaxDays = 30;
@@ -26,9 +30,29 @@ export function NewPlanForm() {
   const [startDate, setStartDate] = useState(() => getDefaultStartDate());
   const [totalDays, setTotalDays] = useState(String(DEFAULT_PLAN_DAYS));
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [goalText, setGoalText] = useState("");
+  const [currentLevelText, setCurrentLevelText] = useState("基础薄弱");
+  const [restDaysText, setRestDaysText] = useState("1");
+  const [preferenceText, setPreferenceText] = useState("每天短时高频");
+
   const isBusy = status === "loading" || status === "success";
   const parsedTotalDays = Number(totalDays);
   const calculatedDeadline = calculateDeadlineDate(startDate, parsedTotalDays);
+  const parsedRestDays = Number(restDaysText) || 0;
+
+  const timeEstimate: StudyTimeEstimateResult | null = useMemo(() => {
+    if (!goalText.trim() || !parsedTotalDays || parsedTotalDays < 1) {
+      return null;
+    }
+
+    return estimateDailyStudyMinutes({
+      goal: goalText,
+      currentLevel: currentLevelText,
+      planDays: parsedTotalDays,
+      restDaysPerWeek: parsedRestDays,
+      preference: preferenceText,
+    });
+  }, [goalText, currentLevelText, parsedTotalDays, parsedRestDays, preferenceText]);
   const progressState = getLoadingProgressState({
     elapsedSeconds,
     status,
@@ -135,6 +159,8 @@ export function NewPlanForm() {
           <span className="sp-label">学习目标</span>
           <textarea
             name="goal"
+            value={goalText}
+            onChange={(e) => setGoalText(e.target.value)}
             placeholder="例如：30 天内完成高等数学期末复习，重点提升积分和应用题"
             rows={4}
             className="sp-input resize-none"
@@ -147,6 +173,8 @@ export function NewPlanForm() {
             <span className="sp-label">当前水平</span>
             <select
               name="current_level"
+              value={currentLevelText}
+              onChange={(e) => setCurrentLevelText(e.target.value)}
               className="sp-input"
             >
               <option>基础薄弱</option>
@@ -193,18 +221,47 @@ export function NewPlanForm() {
                 : "请输入 1 到 30 天的计划天数。"}
             </p>
           </label>
-          <label className="block">
-            <span className="sp-label">每天学习时间</span>
-            <input
-              name="daily_minutes"
-              type="number"
-              min="15"
-              max="600"
-              placeholder="90"
-              className="sp-input"
-            />
-            <p className="sp-help">建议先填能稳定坚持的时间。</p>
-          </label>
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+            <p className="font-semibold">自动估算每日学习时间</p>
+            <p className="mt-1 text-blue-700/80">
+              StudyPilot 会根据你的学习目标、当前水平和计划天数，自动推荐每日学习时间。
+            </p>
+            {timeEstimate ? (
+              <div className="mt-3 space-y-1.5">
+                <p className="text-base font-bold text-blue-900">
+                  预计每日学习时间：约 {timeEstimate.dailyMinutes} 分钟
+                </p>
+                <p>
+                  计划强度：
+                  <span
+                    className={`ml-1 font-semibold ${
+                      timeEstimate.intensity === "冲刺"
+                        ? "text-red-600"
+                        : timeEstimate.intensity === "标准"
+                          ? "text-blue-700"
+                          : "text-emerald-700"
+                    }`}
+                  >
+                    {timeEstimate.intensity}
+                  </span>
+                </p>
+                {timeEstimate.intensity === "冲刺" ? (
+                  <p className="text-red-600/90">
+                    当前计划强度较高，建议适当增加计划天数或减少目标范围。
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="mt-2 text-blue-700/70">
+                填写学习目标和计划天数后自动估算。
+              </p>
+            )}
+          </div>
+          <input
+            type="hidden"
+            name="daily_minutes"
+            value={timeEstimate?.dailyMinutes ?? 90}
+          />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -215,7 +272,8 @@ export function NewPlanForm() {
               type="number"
               min="0"
               max="6"
-              defaultValue="1"
+              value={restDaysText}
+              onChange={(e) => setRestDaysText(e.target.value)}
               className="sp-input"
             />
           </label>
@@ -228,6 +286,8 @@ export function NewPlanForm() {
           <span className="sp-label">学习偏好</span>
           <select
             name="preference"
+            value={preferenceText}
+            onChange={(e) => setPreferenceText(e.target.value)}
             className="sp-input"
           >
             {preferences.map((item) => (

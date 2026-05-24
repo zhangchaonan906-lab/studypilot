@@ -4,6 +4,7 @@ import {
   isValidDateInput,
   parsePlanDays,
 } from "../study/plan-dates";
+import { estimateDailyStudyMinutes } from "../study/time-estimation";
 
 export const PUBLIC_BETA_MAX_PLAN_DAYS = 30;
 export const DEFAULT_REVIEW_METHOD = "完成后用 5 分钟回顾今日重点。";
@@ -224,10 +225,19 @@ export function validateGeneratePlanRequest(
       return { success: false, error: "计划天数必须在 1 到 30 天之间。" };
     }
 
+    const backendDailyMinutes = estimateDailyStudyMinutes({
+      goal: parsed.data.goal,
+      currentLevel: parsed.data.currentLevel ?? "",
+      planDays: totalDays,
+      restDaysPerWeek: parsed.data.restDaysPerWeek,
+      preference: parsed.data.preference ?? "",
+    });
+
     return {
       success: true,
       data: {
         ...parsed.data,
+        dailyMinutes: backendDailyMinutes.dailyMinutes,
         startDate,
         totalDays,
         deadline,
@@ -252,10 +262,19 @@ export function validateGeneratePlanRequest(
     return { success: false, error: "计划天数至少需要 1 天。" };
   }
 
+  const backendDailyMinutes = estimateDailyStudyMinutes({
+    goal: parsed.data.goal,
+    currentLevel: parsed.data.currentLevel ?? "",
+    planDays: maxDays,
+    restDaysPerWeek: parsed.data.restDaysPerWeek,
+    preference: parsed.data.preference ?? "",
+  });
+
   return {
     success: true,
     data: {
       ...parsed.data,
+      dailyMinutes: backendDailyMinutes.dailyMinutes,
       startDate: formatDateOnly(today),
       maxDays,
     },

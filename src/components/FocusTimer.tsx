@@ -25,7 +25,13 @@ function loadInitialGoal(): string {
   return loadGoal(window.localStorage);
 }
 
-export function FocusTimer({ initialGoal }: { initialGoal?: string }) {
+export function FocusTimer({
+  initialGoal,
+  initialMinutes,
+}: {
+  initialGoal?: string;
+  initialMinutes?: number;
+}) {
   const [selectedDuration, setSelectedDuration] = useState<number>(25);
   const [customMinutes, setCustomMinutes] = useState("");
   const [isCustomMode, setIsCustomMode] = useState(false);
@@ -56,6 +62,24 @@ export function FocusTimer({ initialGoal }: { initialGoal?: string }) {
       }
     }
   }, [initialGoal]);
+
+  useEffect(() => {
+    if (initialMinutes && initialMinutes >= 1 && initialMinutes <= 600) {
+      /* eslint-disable react-hooks/set-state-in-effect -- syncing searchParam to timer */
+      if ((DURATIONS as readonly number[]).includes(initialMinutes)) {
+        setIsCustomMode(false);
+        setCustomMinutes("");
+        setSelectedDuration(initialMinutes);
+      } else {
+        setIsCustomMode(true);
+        setCustomMinutes(String(initialMinutes));
+      }
+      setTimeRemaining(initialMinutes * 60);
+      setIsPaused(false);
+      setShowCompletion(false);
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+  }, [initialMinutes]);
 
   useEffect(() => {
     if (!mountedRef.current) {

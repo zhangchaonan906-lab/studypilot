@@ -106,6 +106,7 @@ export default async function TodayPage({
                         taskId={task.id}
                         initialCompleted={task.is_completed}
                         content={task.content}
+                        estimatedMinutes={task.estimated_minutes ?? 0}
                         meta={`${task.estimated_minutes ?? 0} 分钟 · ${priorityLabel(task.priority)}`}
                       />
                     ))}

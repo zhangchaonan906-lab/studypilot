@@ -203,6 +203,15 @@ export function buildGeneratePlanMessages(
         "学习目标类型策略：",
         learningTemplateInstruction,
         "",
+        "任务时间分配要求（重要）：",
+        "1. 系统估算的每日学习时间为 ${input.dailyMinutes} 分钟，每天任务 estimatedMinutes 总和应大致接近该值，允许 ±20% 浮动范围。",
+        "2. 普通学习日安排 2-4 个任务，每个任务 estimatedMinutes 控制在 15-60 分钟。",
+        "3. 不要生成 0 分钟任务，也不要把所有时间堆到一个超长任务里。",
+        "4. 如果 dailyMinutes 较高（>100），可拆成 3-4 个任务，而不是 1-2 个超长任务。",
+        "5. 轻量复盘日的任务总时长可明显低于 dailyMinutes，通常 15-45 分钟即可。",
+        "6. 每个 task 必须填写 estimatedMinutes 字段，必须是正整数。",
+        "7. 每日任务总时长不需要精确等于 dailyMinutes，大致接近即可，轻微偏差不会导致生成失败。",
+        "",
         "任务质量要求：",
         "1. 每个 task.content 必须包含明确学习内容、明确动作、明确产出或完成标准。",
         "2. 禁止生成以下空泛任务：自己制定计划、认真学习、好好复习、复习相关知识、看一些资料、做一些题目、总结一下。",
@@ -221,7 +230,7 @@ export function buildGeneratePlanMessages(
         "2. 内容必须是中文。",
         "3. 公测版当前最多生成 30 天计划；days 从 dayIndex=1 开始连续递增；date 必须严格等于开始日期 + (dayIndex - 1) 天，不要自行推算或编造日期。",
         "4. 普通学习日任务数量 2 到 4 个；轻量复盘日任务数量 0 到 1 个（仅 optional）。",
-        "5. 每天任务 estimatedMinutes 总和不能超过每天可学习时间。",
+        "5. 每天任务 estimatedMinutes 总和围绕每天可学习时间安排，大致的 ±20% 偏差可以接受，不用因为总和没有精确等于 dailyMinutes 而调整任务内容。",
         "6. priority 只能是 must、should、optional。",
         "7. 每 7 天安排一次复盘任务，任务内容或 reviewMethod 必须包含“复盘”。",
         "8. 资料推荐不要编造具体 URL，只提供 type、description 和 searchKeywords；只有第 1 天以及之后每 3 天生成 resources，也就是 dayIndex 为 1、4、7、10、13、16... 时可以填写 resources，其他日期 resources 返回空数组 []。",
@@ -320,9 +329,8 @@ function normalizeAIPlanTask(
   taskCount: number
 ) {
   const task = isRecord(rawTask) ? rawTask : {};
-  const estimatedMinutes =
-    toPositiveInteger(task.estimatedMinutes ?? task.estimated_minutes) ??
-    Math.max(1, Math.floor(dailyMinutes / taskCount));
+  const rawMinutes = task.estimatedMinutes ?? task.estimated_minutes;
+  const estimatedMinutes = normalizeTaskMinutes(rawMinutes, dailyMinutes, taskCount);
 
   return {
     ...task,
@@ -330,6 +338,25 @@ function normalizeAIPlanTask(
     priority: normalizePriority(task.priority) ?? "should",
     estimatedMinutes,
   };
+}
+
+function normalizeTaskMinutes(
+  rawMinutes: unknown,
+  dailyMinutes: number,
+  taskCount: number,
+): number {
+  const parsed = toPositiveInteger(rawMinutes);
+
+  if (parsed === null || parsed > 600) {
+    return clampAndRound(dailyMinutes / Math.max(taskCount, 2));
+  }
+
+  return clampAndRound(parsed);
+}
+
+function clampAndRound(minutes: number): number {
+  const clamped = Math.max(10, Math.min(90, minutes));
+  return Math.round(clamped / 5) * 5;
 }
 
 function normalizeAIPlanResources(rawResources: unknown[]) {

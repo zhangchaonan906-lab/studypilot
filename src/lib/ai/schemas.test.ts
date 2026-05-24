@@ -72,7 +72,7 @@ describe("generate plan request validation", () => {
         startDate: "2026-06-01",
         totalDays: 10,
         deadline: "2026-06-10",
-        dailyMinutes: 90,
+        dailyMinutes: 105,
         restDaysPerWeek: 1,
         preference: "多做题",
         maxDays: 10,
