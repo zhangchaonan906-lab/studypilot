@@ -112,16 +112,12 @@ export async function POST(request: Request) {
     await recordAiUsageLog(supabase, user.id, true);
     return NextResponse.json({ summaryId });
   } catch (error) {
+    console.error("[StudyPilot] weekly-summary failed:", error);
     await recordAiUsageLog(supabase, user.id, false);
 
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "生成周总结失败，请稍后重试。",
-      },
-      { status: 500 }
+      { error: "生成周总结失败，请稍后重试。" },
+      { status: 500 },
     );
   }
 }
