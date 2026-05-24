@@ -92,7 +92,7 @@ function parseAndValidateGeneratedPlan(
   });
 
   if (!validation.ok) {
-    throw new Error(validation.error);
+    throw new AIPlanSchemaError([validation.error]);
   }
 
   return parsedPlan.data;
@@ -155,7 +155,8 @@ export function buildGeneratePlanMessages(
     ? "上一次输出不是合法 JSON，请只返回严格 JSON，不要 Markdown，不要解释文字。"
     : options?.schemaIssues
       ? [
-          "上一次 JSON 结构没有通过校验，请修复 JSON 结构后重新输出。",
+          "上一次 JSON 结构没有通过校验，请修复后重新输出。",
+          "修复要求：date 必须与 dayIndex 严格对应（date = 开始日期 + dayIndex - 1 天）；dayIndex 从 1 开始连续递增；只返回严格 JSON，不要 Markdown，不要解释文字。",
           "校验失败原因：",
           ...options.schemaIssues.slice(0, 8).map((issue) => `- ${issue}`),
         ].join("\n")
@@ -182,6 +183,23 @@ export function buildGeneratePlanMessages(
         `每周休息天数：${input.restDaysPerWeek}`,
         `学习偏好：${preference}`,
         "",
+        "每周休息日规则（重要）：",
+        input.restDaysPerWeek > 0
+          ? [
+              `- 每 7 天为一个学习周期，每个周期安排 ${input.restDaysPerWeek} 天为轻量复盘日。`,
+              "- 轻量复盘日规则：",
+              "  - 不安排新知识点学习。",
+              "  - 安排 0-1 个 optional 任务，内容可以是回顾本周错题、整理笔记、休息或自由复习。",
+              "  - reviewMethod 写成例如「轻量复盘日：用 5 分钟回顾本周错题」。",
+              "  - title 中可以标注「轻量复盘」，例如「第 3 天 轻量复盘」。",
+              "- 普通学习日规则：",
+              "  - 安排 2-4 个具体任务（must/should/optional 混合）。",
+              "  - 任务必须可执行，有明确产出或完成标准。",
+              "- 不要在同一天既是普通学习日又是轻量复盘日。",
+              "- 轻量复盘日不要生成「什么都不做」这种内容，写成「休息或用 5 分钟回顾本周错题」。",
+            ].join("\n")
+          : "- 每周休息天数为 0，每天都是普通学习日，安排 2-4 个具体任务。",
+        "",
         "学习目标类型策略：",
         learningTemplateInstruction,
         "",
@@ -201,8 +219,8 @@ export function buildGeneratePlanMessages(
         "硬性要求：",
         "1. 只输出严格 JSON，不要 Markdown，不要 ```json 代码块，不要解释文字，不要前缀或后缀。",
         "2. 内容必须是中文。",
-        "3. 公测版当前最多生成 30 天计划；days 从 dayIndex=1 开始，日期从开始日期逐日递增，不超过截止日期。",
-        "4. 每天任务数量 2 到 4 个。",
+        "3. 公测版当前最多生成 30 天计划；days 从 dayIndex=1 开始连续递增；date 必须严格等于开始日期 + (dayIndex - 1) 天，不要自行推算或编造日期。",
+        "4. 普通学习日任务数量 2 到 4 个；轻量复盘日任务数量 0 到 1 个（仅 optional）。",
         "5. 每天任务 estimatedMinutes 总和不能超过每天可学习时间。",
         "6. priority 只能是 must、should、optional。",
         "7. 每 7 天安排一次复盘任务，任务内容或 reviewMethod 必须包含“复盘”。",
@@ -363,22 +381,8 @@ function normalizePriority(value: unknown) {
   return priorityMap[normalized] ?? "should";
 }
 
-function normalizeDateString(value: unknown, startDate: string, dayIndex: number) {
-  const fallbackDate = formatDateOnly(addDays(parseDateOnlySafe(startDate), dayIndex - 1));
-
-  if (typeof value !== "string") {
-    return fallbackDate;
-  }
-
-  const normalized = value.trim().replace(/\//g, "-");
-  const match = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-
-  if (!match) {
-    return fallbackDate;
-  }
-
-  const [, year, month, day] = match;
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+function normalizeDateString(_value: unknown, startDate: string, dayIndex: number) {
+  return formatDateOnly(addDays(parseDateOnlySafe(startDate), dayIndex - 1));
 }
 
 function parseDateOnlySafe(value: string) {

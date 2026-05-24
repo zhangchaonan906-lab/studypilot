@@ -198,12 +198,12 @@ export function NewPlanForm() {
 
         {shouldShowPublicBetaLimit ? (
           <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-            公测版当前最多生成 30 天计划，后续版本会开放更长周期。
+            公测版最多生成 30 天计划，后续版本会开放更长周期。
           </div>
         ) : null}
 
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
-          提交后会在服务端调用 AI，并把计划、每日安排、任务和资料建议保存到 Supabase。生成学习计划通常需要 20-60 秒，请不要关闭页面。
+          提交后由服务端调用 AI 生成计划、每日安排、任务和资料建议，通常需要 20-60 秒，请不要关闭页面。
         </div>
 
         {status !== "idle" ? (

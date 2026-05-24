@@ -67,7 +67,7 @@ describe("generatePlan", () => {
     expect(prompt).toContain("内容必须是中文");
     expect(prompt).toContain("每 7 天安排一次复盘任务");
     expect(prompt).toContain("不要编造具体 URL");
-    expect(prompt).toContain("每天任务数量 2 到 4 个");
+    expect(prompt).toContain("普通学习日任务数量 2 到 4 个");
     expect(prompt).toContain("第 1 天以及之后每 3 天生成 resources");
     expect(prompt).toContain("dayIndex 为 1、4、7、10、13、16");
     expect(prompt).toContain("每个 day 都必须包含 resources 字段");
@@ -416,5 +416,188 @@ describe("generatePlan", () => {
 
   it("throws Chinese errors for invalid AI JSON", async () => {
     expect(() => parseAIJson("not json")).toThrow("AI 返回格式不稳定，请重试。");
+  });
+
+  it("normalizes date from dayIndex when AI returns a wrong date", () => {
+    const normalized = normalizeAIPlanResult(
+      {
+        title: "测试计划",
+        overview: "测试",
+        days: [
+          {
+            dayIndex: 1,
+            date: "2026-06-15",
+            title: "第一天",
+            summary: "测试",
+            reviewMethod: "回顾",
+            tasks: [
+              { content: "完成 5 道题", priority: "must", estimatedMinutes: 30 },
+              { content: "整理笔记", priority: "should", estimatedMinutes: 20 },
+            ],
+          },
+        ],
+      },
+      { ...input, startDate: "2026-05-23" }
+    );
+
+    expect(normalized.days[0].date).toBe("2026-05-23");
+  });
+
+  it("computes date = startDate + (dayIndex - 1) days", () => {
+    const normalized = normalizeAIPlanResult(
+      {
+        title: "测试计划",
+        overview: "测试",
+        days: [
+          {
+            dayIndex: 1,
+            date: "2026-01-01",
+            title: "第一天",
+            summary: "测试",
+            reviewMethod: "回顾",
+            tasks: [
+              { content: "完成 5 道题", priority: "must", estimatedMinutes: 30 },
+              { content: "整理笔记", priority: "should", estimatedMinutes: 20 },
+            ],
+          },
+          {
+            dayIndex: 2,
+            date: "2026-01-01",
+            title: "第二天",
+            summary: "测试",
+            reviewMethod: "回顾",
+            tasks: [
+              { content: "完成 6 道题", priority: "must", estimatedMinutes: 30 },
+              { content: "整理笔记", priority: "should", estimatedMinutes: 20 },
+            ],
+          },
+        ],
+      },
+      { ...input, startDate: "2026-05-23" }
+    );
+
+    expect(normalized.days[0].date).toBe("2026-05-23");
+    expect(normalized.days[1].date).toBe("2026-05-24");
+  });
+
+  it("converts string dayIndex to number", () => {
+    const normalized = normalizeAIPlanResult(
+      {
+        title: "测试计划",
+        overview: "测试",
+        days: [
+          {
+            dayIndex: "3",
+            date: "2026-01-01",
+            title: "第三天",
+            summary: "测试",
+            reviewMethod: "回顾",
+            tasks: [
+              { content: "完成 5 道题", priority: "must", estimatedMinutes: 30 },
+              { content: "整理笔记", priority: "should", estimatedMinutes: 20 },
+            ],
+          },
+        ],
+      },
+      { ...input, startDate: "2026-05-23" }
+    );
+
+    expect(normalized.days[0].dayIndex).toBe(3);
+    expect(normalized.days[0].date).toBe("2026-05-25");
+  });
+
+  it("succeeds even when AI returns wrong dates", async () => {
+    const plan = await generatePlan(input, async () =>
+      JSON.stringify({
+        title: "测试计划",
+        overview: "每日学习。",
+        days: [
+          {
+            dayIndex: 1,
+            date: "2026-12-25",
+            title: "第一天",
+            summary: "学习重点",
+            reviewMethod: "回顾今日重点。",
+            tasks: [
+              { content: "完成 5 道基础题并订正", priority: "must", estimatedMinutes: 30 },
+              { content: "整理一页公式卡片", priority: "should", estimatedMinutes: 20 },
+            ],
+          },
+          {
+            dayIndex: 2,
+            date: "1999-01-01",
+            title: "第二天",
+            summary: "练习重点",
+            reviewMethod: "回顾今日重点。",
+            tasks: [
+              { content: "完成 6 道应用题并写出步骤", priority: "must", estimatedMinutes: 40 },
+              { content: "整理错题本", priority: "should", estimatedMinutes: 20 },
+            ],
+          },
+        ],
+      })
+    );
+
+    expect(plan.days[0].date).toBe("2026-05-23");
+    expect(plan.days[1].date).toBe("2026-05-24");
+    expect(plan.title).toBe("测试计划");
+  });
+
+  it("includes rest day rules in prompt when restDaysPerWeek > 0", () => {
+    const messages = buildGeneratePlanMessages({
+      ...input,
+      restDaysPerWeek: 2,
+    });
+    const prompt = messages.map((message) => message.content).join("\n");
+
+    expect(prompt).toContain("每周休息日规则");
+    expect(prompt).toContain("轻量复盘日");
+    expect(prompt).toContain("2 天为轻量复盘日");
+    expect(prompt).toContain("0-1 个 optional 任务");
+  });
+
+  it("states every day is normal when restDaysPerWeek is 0", () => {
+    const messages = buildGeneratePlanMessages({
+      ...input,
+      restDaysPerWeek: 0,
+    });
+    const prompt = messages.map((message) => message.content).join("\n");
+
+    expect(prompt).toContain("每天都是普通学习日");
+  });
+
+  it("retries once when business validation fails and sends fix instructions", async () => {
+    const prompts: string[] = [];
+    let calls = 0;
+
+    const plan = await generatePlan(input, async (messages) => {
+      calls += 1;
+      prompts.push(messages.map((message) => message.content).join("\n"));
+      if (calls === 1) {
+        return JSON.stringify({
+          title: "测试计划",
+          overview: "每日学习。",
+          days: [
+            {
+              dayIndex: 1,
+              date: "2026-05-23",
+              title: "第一天",
+              summary: "学习重点",
+              reviewMethod: "回顾重点。",
+              tasks: [
+                { content: "完成 10 道极限题", priority: "must", estimatedMinutes: 60 },
+                { content: "完成 8 道导数题", priority: "must", estimatedMinutes: 60 },
+              ],
+            },
+          ],
+        });
+      }
+      return JSON.stringify(buildValidPlan());
+    });
+
+    expect(plan.title).toBe("高数两天计划");
+    expect(calls).toBe(2);
+    expect(prompts[1]).toContain("上一次 JSON 结构没有通过校验");
+    expect(prompts[1]).toContain("date 必须与 dayIndex 严格对应");
   });
 });

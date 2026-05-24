@@ -111,7 +111,7 @@ const daySchema = z.preprocess((value) => {
     emptyStringToUndefined,
     z.string().trim().min(1).default(DEFAULT_REVIEW_METHOD)
   ),
-  tasks: z.array(taskSchema).min(2).max(4),
+  tasks: z.array(taskSchema).min(0).max(4),
   resources: z.array(resourceSchema).min(0).max(3).default([]),
 }));
 

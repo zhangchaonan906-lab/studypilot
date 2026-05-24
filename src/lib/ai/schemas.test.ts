@@ -179,24 +179,26 @@ describe("generated plan schema", () => {
     }
   });
 
-  it("rejects too few tasks", () => {
-    const invalid = {
+  it("accepts a single task for light review days", () => {
+    const valid = {
       ...generatedPlan,
       days: [
         {
           ...generatedPlan.days[0],
+          title: "第 3 天 轻量复盘",
+          reviewMethod: "轻量复盘日：用 5 分钟回顾本周错题",
           tasks: [
             {
-              content: "认真学习",
-              priority: "urgent",
-              estimatedMinutes: 30,
+              content: "用 5 分钟回顾本周错题",
+              priority: "optional",
+              estimatedMinutes: 5,
             },
           ],
         },
       ],
     };
 
-    expect(generatedPlanSchema.safeParse(invalid).success).toBe(false);
+    expect(generatedPlanSchema.safeParse(valid).success).toBe(true);
   });
 
   it("rejects more than four tasks per day", () => {
