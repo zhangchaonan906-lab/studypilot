@@ -46,6 +46,76 @@ describe("generate plan request validation", () => {
   it("caps generated days at 30 for public beta", () => {
     expect(calculatePlanDays("2026-12-31", new Date(2026, 4, 23))).toBe(30);
   });
+
+  it("uses startDate and totalDays to calculate deadline and maxDays", () => {
+    const result = validateGeneratePlanRequest(
+      {
+        title: "高数期末冲刺",
+        goal: "复习积分和导数应用",
+        currentLevel: "基础薄弱",
+        startDate: "2026-06-01",
+        totalDays: 10,
+        deadline: "2026-12-31",
+        dailyMinutes: 90,
+        restDaysPerWeek: 1,
+        preference: "多做题",
+      },
+      new Date(2026, 4, 23)
+    );
+
+    expect(result).toEqual({
+      success: true,
+      data: {
+        title: "高数期末冲刺",
+        goal: "复习积分和导数应用",
+        currentLevel: "基础薄弱",
+        startDate: "2026-06-01",
+        totalDays: 10,
+        deadline: "2026-06-10",
+        dailyMinutes: 90,
+        restDaysPerWeek: 1,
+        preference: "多做题",
+        maxDays: 10,
+      },
+    });
+  });
+
+  it("allows a one-day plan that starts today", () => {
+    const result = validateGeneratePlanRequest(
+      {
+        title: "今日冲刺",
+        goal: "完成今天的复习",
+        startDate: "2026-05-23",
+        totalDays: 1,
+        deadline: "2026-05-23",
+        dailyMinutes: 90,
+        restDaysPerWeek: 1,
+      },
+      new Date(2026, 4, 23)
+    );
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid explicit plan days with a Chinese message", () => {
+    const result = validateGeneratePlanRequest(
+      {
+        title: "高数期末冲刺",
+        goal: "复习积分和导数应用",
+        startDate: "2026-06-01",
+        totalDays: 31,
+        deadline: "2026-06-30",
+        dailyMinutes: 90,
+        restDaysPerWeek: 1,
+      },
+      new Date(2026, 4, 23)
+    );
+
+    expect(result).toEqual({
+      success: false,
+      error: "计划天数必须在 1 到 30 天之间。",
+    });
+  });
 });
 
 describe("generated plan schema", () => {

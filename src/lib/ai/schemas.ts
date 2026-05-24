@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  calculateDeadlineDate,
+  isValidDateInput,
+  parsePlanDays,
+} from "../study/plan-dates";
 
 export const PUBLIC_BETA_MAX_PLAN_DAYS = 30;
 export const DEFAULT_REVIEW_METHOD = "完成后用 5 分钟回顾今日重点。";
@@ -9,6 +14,8 @@ export const generatePlanRequestSchema = z.object({
   title: z.string().trim().min(1, "请填写计划标题。"),
   goal: z.string().trim().min(1, "请填写学习目标。"),
   currentLevel: z.string().trim().optional().nullable(),
+  startDate: z.string().trim().optional().nullable(),
+  totalDays: z.unknown().optional(),
   deadline: dateStringSchema,
   dailyMinutes: z.number().int().min(15, "每天学习时间不能少于 15 分钟。").max(600, "每天学习时间不能超过 600 分钟。"),
   restDaysPerWeek: z.number().int().min(0, "每周休息天数不能小于 0。").max(6, "每周休息天数不能超过 6。"),
@@ -194,6 +201,41 @@ export function validateGeneratePlanRequest(
   }
 
   const today = getDateOnly(currentDate);
+  const usesExplicitPlanRange =
+    parsed.data.startDate !== undefined || parsed.data.totalDays !== undefined;
+
+  if (usesExplicitPlanRange) {
+    const startDate =
+      typeof parsed.data.startDate === "string" ? parsed.data.startDate.trim() : "";
+
+    if (!isValidDateInput(startDate)) {
+      return { success: false, error: "请选择有效的起始日期。" };
+    }
+
+    const totalDays = parsePlanDays(parsed.data.totalDays);
+
+    if (totalDays === null) {
+      return { success: false, error: "计划天数必须在 1 到 30 天之间。" };
+    }
+
+    const deadline = calculateDeadlineDate(startDate, totalDays);
+
+    if (!deadline) {
+      return { success: false, error: "计划天数必须在 1 到 30 天之间。" };
+    }
+
+    return {
+      success: true,
+      data: {
+        ...parsed.data,
+        startDate,
+        totalDays,
+        deadline,
+        maxDays: totalDays,
+      },
+    };
+  }
+
   const deadlineDate = parseDateOnly(parsed.data.deadline);
 
   if (Number.isNaN(deadlineDate.getTime())) {

@@ -9,6 +9,12 @@ import {
   planGenerationProgressSteps,
   type LoadingStatus,
 } from "@/lib/ui/loading-state";
+import {
+  DEFAULT_PLAN_DAYS,
+  buildGeneratePlanPayloadFromFormData,
+  calculateDeadlineDate,
+  getDefaultStartDate,
+} from "@/lib/study/plan-dates";
 
 const preferences = ["每天短时高频", "周末集中学习", "多做题", "多看讲解", "需要复盘提醒"];
 const publicBetaMaxDays = 30;
@@ -17,9 +23,12 @@ export function NewPlanForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<LoadingStatus>("idle");
-  const [selectedDeadline, setSelectedDeadline] = useState("");
+  const [startDate, setStartDate] = useState(() => getDefaultStartDate());
+  const [totalDays, setTotalDays] = useState(String(DEFAULT_PLAN_DAYS));
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const isBusy = status === "loading" || status === "success";
+  const parsedTotalDays = Number(totalDays);
+  const calculatedDeadline = calculateDeadlineDate(startDate, parsedTotalDays);
   const progressState = getLoadingProgressState({
     elapsedSeconds,
     status,
@@ -34,8 +43,6 @@ export function NewPlanForm() {
     loadingLabel: "生成中...",
     successLabel: "生成完成",
   });
-  const planDays = getInclusiveDaysUntil(selectedDeadline);
-  const shouldShowPublicBetaLimit = planDays > publicBetaMaxDays;
 
   useEffect(() => {
     if (status !== "loading") {
@@ -57,19 +64,17 @@ export function NewPlanForm() {
     }
 
     setError(null);
+    const formData = new FormData(event.currentTarget);
+    const payload = buildGeneratePlanPayloadFromFormData(formData);
+
+    if (!payload.ok) {
+      setError(payload.error);
+      setStatus("error");
+      return;
+    }
+
     setStatus("loading");
     setElapsedSeconds(0);
-
-    const formData = new FormData(event.currentTarget);
-    const payload = {
-      title: String(formData.get("title") ?? "").trim(),
-      goal: String(formData.get("goal") ?? "").trim(),
-      currentLevel: String(formData.get("current_level") ?? "").trim(),
-      deadline: String(formData.get("deadline") ?? "").trim(),
-      dailyMinutes: Number(formData.get("daily_minutes") ?? 0),
-      restDaysPerWeek: Number(formData.get("rest_days_per_week") ?? 1),
-      preference: String(formData.get("preference") ?? "").trim(),
-    };
 
     try {
       const response = await fetch("/api/generate-plan", {
@@ -77,7 +82,7 @@ export function NewPlanForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload.data),
       });
       const result = await response.json().catch(() => null);
 
@@ -150,14 +155,43 @@ export function NewPlanForm() {
             </select>
           </label>
           <label className="block">
-            <span className="sp-label">截止日期</span>
+            <span className="sp-label">起始日期</span>
             <input
-              name="deadline"
+              name="start_date"
               type="date"
-              onChange={(event) => setSelectedDeadline(event.target.value)}
+              value={startDate}
+              onChange={(event) => setStartDate(event.target.value)}
+              className="sp-input"
+            />
+            <p className="sp-help">你只需要选择从哪天开始，以及计划持续多少天。</p>
+          </label>
+          <label className="block">
+            <span className="sp-label">计划天数</span>
+            <input
+              name="total_days"
+              type="number"
+              min="1"
+              max={publicBetaMaxDays}
+              value={totalDays}
+              onChange={(event) => setTotalDays(event.target.value)}
               className="sp-input"
             />
             <p className="sp-help">公测版最多生成前 30 天。</p>
+          </label>
+          <label className="block">
+            <span className="sp-label">截止日期</span>
+            <input
+              name="deadline"
+              type="text"
+              value={calculatedDeadline ?? ""}
+              readOnly
+              className="sp-input bg-slate-50 text-slate-600"
+            />
+            <p className="sp-help">
+              {calculatedDeadline
+                ? `系统将自动计算截止日期：${calculatedDeadline}`
+                : "请输入 1 到 30 天的计划天数。"}
+            </p>
           </label>
           <label className="block">
             <span className="sp-label">每天学习时间</span>
@@ -171,6 +205,9 @@ export function NewPlanForm() {
             />
             <p className="sp-help">建议先填能稳定坚持的时间。</p>
           </label>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
           <label className="block">
             <span className="sp-label">每周休息天数</span>
             <input
@@ -182,6 +219,9 @@ export function NewPlanForm() {
               className="sp-input"
             />
           </label>
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+            你选择的起始日期会对应 Day 1，后续每天按顺序自动递增，减少日期错位。
+          </div>
         </div>
 
         <label className="block">
@@ -195,12 +235,6 @@ export function NewPlanForm() {
             ))}
           </select>
         </label>
-
-        {shouldShowPublicBetaLimit ? (
-          <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-            公测版最多生成 30 天计划，后续版本会开放更长周期。
-          </div>
-        ) : null}
 
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
           提交后由服务端调用 AI 生成计划、每日安排、任务和资料建议，通常需要 20-60 秒，请不要关闭页面。
@@ -227,24 +261,4 @@ export function NewPlanForm() {
       </form>
     </section>
   );
-}
-
-function getInclusiveDaysUntil(deadline: string) {
-  if (!deadline) {
-    return 0;
-  }
-
-  const [year, month, day] = deadline.split("-").map(Number);
-
-  if (!year || !month || !day) {
-    return 0;
-  }
-
-  const today = new Date();
-  const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const deadlineDate = new Date(year, month - 1, day);
-  const millisecondsPerDay = 24 * 60 * 60 * 1000;
-  const diffDays = Math.floor((deadlineDate.getTime() - startDate.getTime()) / millisecondsPerDay);
-
-  return Math.max(diffDays + 1, 0);
 }
