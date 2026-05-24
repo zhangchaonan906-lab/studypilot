@@ -4,6 +4,8 @@ import {
   getAuthRedirectPath,
   getAuthErrorMessage,
   isProtectedPath,
+  submitAuthCredentials,
+  validateAuthCredentials,
 } from "./auth";
 
 describe("auth route rules", () => {
@@ -55,15 +57,95 @@ describe("auth error copy", () => {
     expect(getAuthErrorMessage("Something unexpected")).toBe("Something unexpected");
   });
 
-  it("keeps the raw Supabase error message for debugging on the page", () => {
+  it("does not expose raw Supabase error details from formatted errors", () => {
     expect(formatAuthError("Signup disabled")).toEqual({
       message: "当前 Supabase 项目未开启邮箱注册",
-      rawMessage: "Signup disabled",
     });
 
     expect(formatAuthError("Something unexpected")).toEqual({
-      message: "Something unexpected",
-      rawMessage: "Something unexpected",
+      message: "操作失败，请重试。",
     });
   });
 });
+
+describe("auth credential validation", () => {
+  it("rejects invalid signup email before calling Supabase", async () => {
+    const calls: string[] = [];
+    const auth = createAuthStub(calls);
+
+    const result = await submitAuthCredentials({
+      mode: "sign-up",
+      email: "not-an-email",
+      password: "123456",
+      auth,
+      origin: "http://localhost:3000",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "请输入有效的邮箱地址。",
+    });
+    expect(calls).toEqual([]);
+  });
+
+  it("rejects invalid signin email before calling Supabase", async () => {
+    const calls: string[] = [];
+    const auth = createAuthStub(calls);
+
+    const result = await submitAuthCredentials({
+      mode: "sign-in",
+      email: "student",
+      password: "123456",
+      auth,
+      origin: "http://localhost:3000",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "请输入有效的邮箱地址。",
+    });
+    expect(calls).toEqual([]);
+  });
+
+  it("trims email before authentication", () => {
+    expect(
+      validateAuthCredentials({
+        mode: "sign-in",
+        email: "  student@example.com  ",
+        password: "123456",
+      })
+    ).toEqual({
+      ok: true,
+      data: {
+        email: "student@example.com",
+        password: "123456",
+      },
+    });
+  });
+
+  it("rejects short signup passwords with Chinese copy", () => {
+    expect(
+      validateAuthCredentials({
+        mode: "sign-up",
+        email: "student@example.com",
+        password: "12345",
+      })
+    ).toEqual({
+      ok: false,
+      error: "密码至少需要 6 位。",
+    });
+  });
+});
+
+function createAuthStub(calls: string[]) {
+  return {
+    async signUp() {
+      calls.push("signUp");
+      return { data: { session: null }, error: null };
+    },
+    async signInWithPassword() {
+      calls.push("signInWithPassword");
+      return { error: null };
+    },
+  };
+}

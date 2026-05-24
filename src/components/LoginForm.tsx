@@ -2,14 +2,17 @@
 
 import { FormEvent, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { formatAuthError } from "@/lib/auth";
+import {
+  authValidationMessages,
+  submitAuthCredentials,
+  type AuthMode,
+  validateAuthCredentials,
+} from "@/lib/auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { ErrorMessage, SuccessMessage } from "./StatusMessage";
 
-type AuthMode = "sign-in" | "sign-up";
 type AuthErrorState = {
   message: string;
-  rawMessage: string;
 };
 
 export function LoginForm({ initialMessage }: { initialMessage?: string }) {
@@ -25,13 +28,14 @@ export function LoginForm({ initialMessage }: { initialMessage?: string }) {
     setNotice(null);
 
     const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "").trim();
+    const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
 
-    if (!email || !password) {
+    const validation = validateAuthCredentials({ mode, email, password });
+
+    if (!validation.ok) {
       setError({
-        message: "请填写邮箱和密码。",
-        rawMessage: "Missing email or password",
+        message: validation.error,
       });
       return;
     }
@@ -39,22 +43,23 @@ export function LoginForm({ initialMessage }: { initialMessage?: string }) {
     startTransition(async () => {
       try {
         const supabase = createSupabaseBrowserClient();
+        const result = await submitAuthCredentials({
+          mode,
+          email: validation.data.email,
+          password: validation.data.password,
+          auth: supabase.auth,
+          origin: window.location.origin,
+        });
+
+        if (!result.ok) {
+          setError({
+            message: result.error,
+          });
+          return;
+        }
 
         if (mode === "sign-up") {
-          const { data, error: signUpError } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-            },
-          });
-
-          if (signUpError) {
-            setError(formatAuthError(signUpError.message));
-            return;
-          }
-
-          if (data.session) {
+          if (result.data.session) {
             router.replace("/dashboard");
             router.refresh();
             return;
@@ -64,22 +69,15 @@ export function LoginForm({ initialMessage }: { initialMessage?: string }) {
           return;
         }
 
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (signInError) {
-          setError(formatAuthError(signInError.message));
-          return;
-        }
-
         router.replace("/dashboard");
         router.refresh();
-      } catch (authError) {
-        setError(
-          formatAuthError(authError instanceof Error ? authError.message : undefined)
-        );
+      } catch {
+        setError({
+          message:
+            mode === "sign-in"
+              ? authValidationMessages.loginFailed
+              : authValidationMessages.signupFailed,
+        });
       }
     });
   }
@@ -97,7 +95,11 @@ export function LoginForm({ initialMessage }: { initialMessage?: string }) {
       <div className="mt-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1">
         <button
           type="button"
-          onClick={() => setMode("sign-in")}
+          onClick={() => {
+            setMode("sign-in");
+            setError(null);
+            setNotice(null);
+          }}
           className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
             mode === "sign-in" ? "bg-white text-primary shadow-sm" : "text-slate-600"
           }`}
@@ -106,7 +108,11 @@ export function LoginForm({ initialMessage }: { initialMessage?: string }) {
         </button>
         <button
           type="button"
-          onClick={() => setMode("sign-up")}
+          onClick={() => {
+            setMode("sign-up");
+            setError(null);
+            setNotice(null);
+          }}
           className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
             mode === "sign-up" ? "bg-white text-primary shadow-sm" : "text-slate-600"
           }`}
@@ -115,12 +121,21 @@ export function LoginForm({ initialMessage }: { initialMessage?: string }) {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form
+        noValidate
+        onSubmit={handleSubmit}
+        onChange={() => {
+          setError(null);
+          setNotice(null);
+        }}
+        className="mt-6 space-y-4"
+      >
         <label className="block">
           <span className="sp-label">邮箱</span>
           <input
             name="email"
             type="email"
+            inputMode="email"
             autoComplete="email"
             placeholder="name@university.edu"
             className="sp-input"
@@ -140,9 +155,6 @@ export function LoginForm({ initialMessage }: { initialMessage?: string }) {
         {error ? (
           <ErrorMessage>
             <p>{error.message}</p>
-            <p className="mt-1 break-words text-xs text-red-600">
-              Supabase 原始错误：{error.rawMessage}
-            </p>
           </ErrorMessage>
         ) : null}
         {notice ? (
