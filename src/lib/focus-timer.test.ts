@@ -265,3 +265,36 @@ describe("FocusTimer component structure", () => {
     expect(source).toContain("disabled={timerActive}");
   });
 });
+
+describe("focus-timer linkage with today tasks", () => {
+  it("accepts initialGoal prop for pre-filling from query params", () => {
+    const timerSource = readFileSync(
+      join(rootDir, "src", "components", "FocusTimer.tsx"),
+      "utf8",
+    );
+    expect(timerSource).toContain("initialGoal?: string");
+    expect(timerSource).toContain("initialGoal && initialGoal.trim()");
+  });
+
+  it("reads goal searchParam in /focus page", () => {
+    const pageSource = readFileSync(
+      join(rootDir, "src", "app", "(app)", "focus", "page.tsx"),
+      "utf8",
+    );
+    expect(pageSource).toContain("searchParams");
+    expect(pageSource).toContain("goal");
+    expect(pageSource).toContain("decodeURIComponent");
+    expect(pageSource).toContain("initialGoal={initialGoal}");
+  });
+
+  it("shows focus start link in TaskCompletionToggle for incomplete tasks", () => {
+    const toggleSource = readFileSync(
+      join(rootDir, "src", "components", "TaskCompletionToggle.tsx"),
+      "utf8",
+    );
+    expect(toggleSource).toContain("开始专注");
+    expect(toggleSource).toContain("encodeURIComponent");
+    expect(toggleSource).toContain("/focus?goal=");
+    expect(toggleSource).toContain("!isCompleted");
+  });
+});

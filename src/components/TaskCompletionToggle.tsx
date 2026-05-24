@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { updateTaskCompletionAction } from "@/lib/study/actions";
 
@@ -96,6 +97,15 @@ export function TaskCompletionToggle({
           {statusText}
         </span>
       </button>
+      {!isCompleted ? (
+        <Link
+          href={`/focus?goal=${encodeURIComponent(content)}`}
+          className="ml-10 inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary transition hover:border-primary hover:bg-indigo-50"
+        >
+          <span aria-hidden="true">⏱</span>
+          开始专注
+        </Link>
+      ) : null}
       {error ? <p className="mt-3 text-sm font-semibold text-red-600">{error}</p> : null}
     </div>
   );

@@ -25,7 +25,7 @@ function loadInitialGoal(): string {
   return loadGoal(window.localStorage);
 }
 
-export function FocusTimer() {
+export function FocusTimer({ initialGoal }: { initialGoal?: string }) {
   const [selectedDuration, setSelectedDuration] = useState<number>(25);
   const [customMinutes, setCustomMinutes] = useState("");
   const [isCustomMode, setIsCustomMode] = useState(false);
@@ -33,7 +33,10 @@ export function FocusTimer() {
   const [endTime, setEndTime] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [goal, setGoal] = useState(loadInitialGoal);
+  const [goal, setGoal] = useState(() => {
+    if (initialGoal) return initialGoal;
+    return loadInitialGoal();
+  });
   const [sessions, setSessions] = useState<FocusSession[]>(loadInitialSessions);
   const [showCompletion, setShowCompletion] = useState(false);
 
@@ -43,6 +46,16 @@ export function FocusTimer() {
   useEffect(() => {
     goalRef.current = goal;
   }, [goal]);
+
+  useEffect(() => {
+    if (initialGoal && initialGoal.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing parent searchParam to local state
+      setGoal(initialGoal);
+      if (typeof window !== "undefined") {
+        saveGoal(window.localStorage, initialGoal);
+      }
+    }
+  }, [initialGoal]);
 
   useEffect(() => {
     if (!mountedRef.current) {
