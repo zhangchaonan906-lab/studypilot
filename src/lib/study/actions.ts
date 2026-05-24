@@ -8,6 +8,7 @@ import {
   createTask,
   deletePlan,
   deleteTask,
+  updatePlanTitle,
   updateTask,
   updateTaskCompletion,
   upsertDailyReflection,
@@ -157,6 +158,7 @@ export async function deletePlanAction(
     };
   }
 
+  revalidatePath("/", "layout");
   revalidatePath("/dashboard");
   revalidatePath("/today");
   revalidatePath("/review");
@@ -168,6 +170,23 @@ export async function deletePlanAction(
   }
 
   return { success: "学习计划已删除。" };
+}
+
+export async function renamePlanAction(
+  planId: string,
+  title: string,
+): Promise<ActionState> {
+  try {
+    await updatePlanTitle(planId, title);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    return { error: message || "重命名失败，请稍后重试。" };
+  }
+
+  revalidatePath("/", "layout");
+  revalidatePath(`/plans/${planId}`);
+
+  return { success: "计划已重命名。" };
 }
 
 export async function createMistakeReviewAction(formData: FormData) {

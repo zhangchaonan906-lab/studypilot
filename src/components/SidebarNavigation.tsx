@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { SignOutButton } from "./SignOutButton";
 import { StudyPilotLogo } from "./StudyPilotLogo";
+import { renamePlanAction, deletePlanAction } from "@/lib/study/actions";
 
 type SidebarPlan = {
   id: string;
@@ -139,10 +140,9 @@ function SidebarContent({
             ) : (
               <div className="space-y-1.5">
                 {plans.map((plan) => (
-                  <SidebarLink
+                  <PlanSidebarItem
                     key={plan.id}
-                    href={`/plans/${plan.id}`}
-                    label={plan.title}
+                    plan={plan}
                     active={isActivePath(pathname, `/plans/${plan.id}`)}
                     onNavigate={onNavigate}
                   />
@@ -243,5 +243,216 @@ function SidebarLink({
       ) : null}
       <span className="truncate">{label}</span>
     </Link>
+  );
+}
+
+type PlanSidebarItemMode = "normal" | "menu" | "rename" | "delete";
+
+function PlanSidebarItem({
+  plan,
+  active,
+  onNavigate,
+}: {
+  plan: { id: string; title: string };
+  active: boolean;
+  onNavigate?: () => void;
+}) {
+  const router = useRouter();
+  const [mode, setMode] = useState<PlanSidebarItemMode>("normal");
+  const [renameValue, setRenameValue] = useState(plan.title);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function resetError() {
+    setError(null);
+  }
+
+  function handleOpenMenu() {
+    setMode("menu");
+    resetError();
+  }
+
+  function handleCloseMenu() {
+    setMode("normal");
+    resetError();
+  }
+
+  function handleStartRename() {
+    setRenameValue(plan.title);
+    setMode("rename");
+    resetError();
+  }
+
+  function handleStartDelete() {
+    setMode("delete");
+    resetError();
+  }
+
+  function handleCancel() {
+    if (isPending) return;
+    setMode("normal");
+    resetError();
+  }
+
+  function handleSaveRename() {
+    const trimmed = renameValue.trim();
+    if (trimmed.length === 0) {
+      setError("计划标题不能为空。");
+      return;
+    }
+    if (trimmed.length > 60) {
+      setError("计划标题不能超过 60 个字。");
+      return;
+    }
+    if (trimmed === plan.title) {
+      setMode("normal");
+      return;
+    }
+
+    setError(null);
+    startTransition(async () => {
+      const result = await renamePlanAction(plan.id, trimmed);
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+      setMode("normal");
+      router.refresh();
+    });
+  }
+
+  function handleDelete() {
+    setError(null);
+    startTransition(async () => {
+      const result = await deletePlanAction(plan.id, false);
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+      setMode("normal");
+      if (active) {
+        router.replace("/dashboard");
+      } else {
+        router.refresh();
+      }
+    });
+  }
+
+  if (mode === "rename") {
+    return (
+      <div className="rounded-xl px-3 py-2">
+        <div className="flex items-center gap-1.5">
+          <input
+            type="text"
+            value={renameValue}
+            onChange={(e) => {
+              setRenameValue(e.target.value);
+              resetError();
+            }}
+            maxLength={60}
+            autoFocus
+            className="min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1 text-sm font-semibold text-ink placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+          />
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={handleSaveRename}
+            className="shrink-0 rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isPending ? "保存中..." : "保存"}
+          </button>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={handleCancel}
+            className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            取消
+          </button>
+        </div>
+        {error ? (
+          <p className="mt-1.5 text-xs font-semibold text-red-600">{error}</p>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (mode === "delete") {
+    return (
+      <div className="rounded-xl bg-red-50 px-3 py-2.5">
+        <p className="text-sm font-semibold text-red-700">{`确定要删除"${plan.title}"吗？`}</p>
+        <p className="mt-1 text-xs leading-5 text-red-600/80">
+          删除后无法恢复，该计划下的每日任务、资料、复盘和错题都会被删除。
+        </p>
+        <div className="mt-2.5 flex items-center gap-2">
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={handleDelete}
+            className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isPending ? "删除中..." : "确认删除"}
+          </button>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={handleCancel}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            取消
+          </button>
+        </div>
+        {error ? (
+          <p className="mt-1.5 text-xs font-semibold text-red-600">{error}</p>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="group relative">
+      <div className="flex items-center gap-1">
+        <Link
+          href={`/plans/${plan.id}`}
+          onClick={onNavigate}
+          title={plan.title}
+          className={`min-w-0 flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+            active
+              ? "bg-indigo-50 text-primary ring-1 ring-indigo-100"
+              : "text-slate-600 hover:bg-slate-50 hover:text-ink"
+          }`}
+        >
+          <span className="block truncate">{plan.title}</span>
+        </Link>
+        <button
+          type="button"
+          onClick={mode === "menu" ? handleCloseMenu : handleOpenMenu}
+          aria-label={mode === "menu" ? "关闭操作菜单" : "打开操作菜单"}
+          className={`shrink-0 rounded-lg p-1.5 text-sm font-bold leading-none text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 sm:opacity-0 sm:group-hover:opacity-100 ${
+            mode === "menu" ? "bg-slate-100 text-slate-600 opacity-100" : ""
+          }`}
+        >
+          ···
+        </button>
+      </div>
+      {mode === "menu" ? (
+        <div className="mt-1 flex items-center gap-1.5 px-3">
+          <button
+            type="button"
+            onClick={handleStartRename}
+            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+          >
+            重命名
+          </button>
+          <button
+            type="button"
+            onClick={handleStartDelete}
+            className="rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-600 transition hover:border-red-300 hover:bg-red-50"
+          >
+            删除计划
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }

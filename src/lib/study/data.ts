@@ -113,6 +113,33 @@ export async function deletePlan(planId: string) {
   return deletePlanForUser(supabase, userId, planId);
 }
 
+export async function updatePlanTitle(planId: string, title: string) {
+  const trimmed = title.trim();
+  if (trimmed.length === 0) {
+    throw new Error("计划标题不能为空。");
+  }
+  if (trimmed.length > 60) {
+    throw new Error("计划标题不能超过 60 个字。");
+  }
+
+  const { supabase, userId } = await getAuthenticatedContext();
+  const { data, error } = await supabase
+    .from("plans")
+    .update({ title: trimmed })
+    .eq("id", planId)
+    .eq("user_id", userId)
+    .select("id")
+    .maybeSingle();
+
+  throwIfError(error, "重命名失败");
+
+  if (!data) {
+    throw new Error("计划不存在或无权修改。");
+  }
+
+  return data;
+}
+
 export async function getPlanDetail(planId: string): Promise<PlanDetail | null> {
   const { supabase, userId } = await getAuthenticatedContext();
   const { data: plan, error: planError } = await supabase
