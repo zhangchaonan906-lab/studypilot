@@ -15,7 +15,10 @@ describe("StudyPilot brand logo", () => {
     expect(source).toContain("showText = false");
     expect(source).toContain("className");
     expect(source).toContain("<svg");
-    expect(source).toContain("linearGradient");
+    expect(source).toContain("StudyPilot cat mark");
+    expect(source).toContain("#FFFFFF");
+    expect(source).toContain("#FACC15");
+    expect(source).not.toContain("linearGradient");
   });
 
   it("uses the reusable logo in the main brand surfaces", () => {
@@ -37,6 +40,10 @@ describe("StudyPilot brand logo", () => {
     const iconPath = join(rootDir, "src", "app", "icon.svg");
 
     expect(existsSync(iconPath)).toBe(true);
-    expect(readFileSync(iconPath, "utf8")).toContain("<svg");
+    const source = readFileSync(iconPath, "utf8");
+    expect(source).toContain("<svg");
+    expect(source).toContain("StudyPilot cat mark");
+    expect(source).toContain("#FFFFFF");
+    expect(source).toContain("#FACC15");
   });
 });

@@ -22,65 +22,46 @@ export function StudyPilotLogo({
         aria-hidden={showText ? true : undefined}
         className="shrink-0 drop-shadow-sm"
       >
-        <rect x="3" y="3" width="58" height="58" rx="18" fill="url(#studypilot-logo-bg)" />
-        <path
-          d="M17 21c5.5-2.4 10.5-1.8 15 1.8v24.4c-4.5-3.6-9.5-4.2-15-1.8V21Z"
-          fill="url(#studypilot-logo-page-left)"
-          fillOpacity="0.95"
-        />
-        <path
-          d="M32 22.8c4.5-3.6 9.5-4.2 15-1.8v24.4c-5.5-2.4-10.5-1.8-15 1.8V22.8Z"
-          fill="url(#studypilot-logo-page-right)"
-          fillOpacity="0.88"
-        />
-        <path
-          d="M19 29.5c4.1-1.1 7.6-.6 10.7 1.8M19 37c4.1-1.1 7.6-.6 10.7 1.8M34.4 31.3c2.5-1.7 5.5-2.4 9.4-1.8"
-          stroke="#C7D2FE"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M20 48c8.7 5.3 22.5 4.8 28-1.5"
-          stroke="#DBEAFE"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <path
-          d="M18.5 38.5c5.2-8.4 14-12.2 26.2-11.5"
-          stroke="#A5B4FC"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray="1 6"
-        />
-        <path
-          d="M42.8 16.6 51 37.8 39.4 31l-10.9 8.8 6.7-12.1-13-6.1 20.6-5Z"
-          fill="white"
-        />
-        <path
-          d="M42.8 16.6 39.4 31 51 37.8 42.8 16.6Z"
-          fill="#E0E7FF"
-        />
-        <path
-          d="M42.8 16.6 35.2 27.7"
-          stroke="#6366F1"
+        <title>StudyPilot cat mark</title>
+        <rect
+          x="4"
+          y="4"
+          width="56"
+          height="56"
+          rx="18"
+          fill="#FFFFFF"
+          stroke="#E5E7EB"
           strokeWidth="2"
+        />
+        <path
+          d="M17.5 33.5c0-5.5 3.2-10 7.9-12.2l-1.1-7.9c-.1-1 1.1-1.6 1.8-.9l6 6c1.3-.1 2.5-.1 3.8 0l6-6c.7-.7 1.9-.1 1.8.9l-1.1 7.9c4.7 2.2 7.9 6.7 7.9 12.2 0 8.3-6.9 14.8-15.5 14.8h-2c-8.6 0-15.5-6.5-15.5-14.8Z"
+          fill="#FACC15"
+        />
+        <path
+          d="M21.9 41.8c2.7 4.8 7.4 7.5 12.1 7.5h2c4.7 0 9.4-2.7 12.1-7.5"
+          fill="#F59E0B"
+          fillOpacity="0.45"
+        />
+        <circle cx="28.5" cy="32.5" r="2.1" fill="#1F2937" />
+        <circle cx="39.5" cy="32.5" r="2.1" fill="#1F2937" />
+        <path
+          d="M32.7 37.1h2.6L34 38.5l-1.3-1.4Z"
+          fill="#1F2937"
+          stroke="#1F2937"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M31.2 40.2c1.6 1.4 4 1.4 5.6 0"
+          stroke="#92400E"
+          strokeWidth="1.9"
           strokeLinecap="round"
         />
-        <defs>
-          <linearGradient id="studypilot-logo-bg" x1="8" y1="8" x2="56" y2="58" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#1D4ED8" />
-            <stop offset="0.55" stopColor="#4F46E5" />
-            <stop offset="1" stopColor="#7C3AED" />
-          </linearGradient>
-          <linearGradient id="studypilot-logo-page-left" x1="17" y1="20" x2="32" y2="47" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#FFFFFF" />
-            <stop offset="1" stopColor="#BFDBFE" />
-          </linearGradient>
-          <linearGradient id="studypilot-logo-page-right" x1="32" y1="20" x2="47" y2="47" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#EEF2FF" />
-            <stop offset="1" stopColor="#C4B5FD" />
-          </linearGradient>
-        </defs>
+        <path
+          d="M23 36.9h-5.2M23.2 40.7l-4.7 1.7M45 36.9h5.2M44.8 40.7l4.7 1.7"
+          stroke="#92400E"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
       </svg>
       {showText ? (
         <span className="truncate font-bold tracking-normal text-ink">StudyPilot</span>
