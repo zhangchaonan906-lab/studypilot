@@ -29,6 +29,32 @@ describe("study metrics", () => {
     });
   });
 
+  it("returns 100% when all tasks are completed", () => {
+    expect(
+      calculateCompletionRate([
+        { is_completed: true },
+        { is_completed: true },
+      ])
+    ).toEqual({
+      completed: 2,
+      total: 2,
+      rate: 100,
+    });
+  });
+
+  it("returns 0% when no tasks are completed", () => {
+    expect(
+      calculateCompletionRate([
+        { is_completed: false },
+        { is_completed: false },
+      ])
+    ).toEqual({
+      completed: 0,
+      total: 2,
+      rate: 0,
+    });
+  });
+
   it("calculates remaining days until a deadline", () => {
     expect(getDaysUntilDeadline("2026-05-31", "2026-05-23")).toBe(8);
     expect(getDaysUntilDeadline("2026-05-23", "2026-05-23")).toBe(0);

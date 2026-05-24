@@ -30,6 +30,7 @@ export function TaskCard({ task, planId }: { task: Task; planId: string }) {
   const [editPriority, setEditPriority] = useState<Task["priority"]>(task.priority);
   const [editError, setEditError] = useState<string | null>(null);
   const [isSavePending, startSaveTransition] = useTransition();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeletePending, startDeleteTransition] = useTransition();
   const [isDeleted, setIsDeleted] = useState(false);
 
@@ -75,18 +76,21 @@ export function TaskCard({ task, planId }: { task: Task; planId: string }) {
       return;
     }
 
+    setDeleteError(null);
+
     startDeleteTransition(async () => {
       try {
         const result = await deleteTaskAction(task.id, planId);
 
         if (result.error) {
+          setDeleteError(result.error);
           return;
         }
 
         setIsDeleted(true);
         router.refresh();
       } catch {
-        // deletion failed silently after confirm
+        setDeleteError("任务删除失败，请稍后重试。");
       }
     });
   }
@@ -193,6 +197,9 @@ export function TaskCard({ task, planId }: { task: Task; planId: string }) {
           </button>
         </div>
       </div>
+      {deleteError ? (
+        <p className="mb-2 text-sm font-semibold text-red-600">{deleteError}</p>
+      ) : null}
       <TaskCompletionToggle
         taskId={task.id}
         initialCompleted={task.is_completed}

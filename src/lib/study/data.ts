@@ -584,6 +584,7 @@ export async function getDashboardData(
       latestReflection: null,
       mistakeCount: 0,
       todayTasks: [],
+      planCompletions: {},
     };
   }
 
@@ -641,6 +642,8 @@ export async function getDashboardData(
   throwIfError(reflectionResult.error, "读取最近复盘失败");
   throwIfError(mistakeCountResult.error, "读取错题数量失败");
 
+  const planCompletions = await computePlanCompletions(supabase, userId, activePlans);
+
   return {
     activePlans,
     currentPlan,
@@ -650,6 +653,7 @@ export async function getDashboardData(
     latestReflection: ((reflectionResult.data ?? []) as DailyReflection[])[0] ?? null,
     mistakeCount: mistakeCountResult.count ?? 0,
     todayTasks,
+    planCompletions,
   };
 }
 
@@ -738,6 +742,80 @@ async function countTasksByPlanDayIds(
 
   throwIfError(error, "读取本周任务数量失败");
   return count ?? 0;
+}
+
+async function computePlanCompletions(
+  supabase: SupabaseClient,
+  userId: string,
+  plans: Plan[],
+): Promise<Record<string, number>> {
+  if (plans.length === 0) {
+    return {};
+  }
+
+  const planIds = plans.map((plan) => plan.id);
+
+  const { data: allDays, error: daysError } = await supabase
+    .from("plan_days")
+    .select("id, plan_id")
+    .eq("user_id", userId)
+    .in("plan_id", planIds);
+
+  throwIfError(daysError, "读取计划日期失败");
+
+  const typedDays = (allDays ?? []) as Pick<PlanDay, "id" | "plan_id">[];
+
+  if (typedDays.length === 0) {
+    return Object.fromEntries(planIds.map((id) => [id, 0]));
+  }
+
+  const dayIds = typedDays.map((day) => day.id);
+
+  const { data: allTasks, error: tasksError } = await supabase
+    .from("tasks")
+    .select("plan_day_id, is_completed")
+    .eq("user_id", userId)
+    .in("plan_day_id", dayIds);
+
+  throwIfError(tasksError, "读取任务失败");
+
+  const typedTasks = (allTasks ?? []) as Pick<Task, "plan_day_id" | "is_completed">[];
+
+  const dayPlanMap = new Map(typedDays.map((day) => [day.id, day.plan_id]));
+
+  const planStats = new Map<string, { total: number; completed: number }>();
+
+  for (const planId of planIds) {
+    planStats.set(planId, { total: 0, completed: 0 });
+  }
+
+  for (const task of typedTasks) {
+    const planId = dayPlanMap.get(task.plan_day_id);
+
+    if (!planId) {
+      continue;
+    }
+
+    const stats = planStats.get(planId);
+
+    if (!stats) {
+      continue;
+    }
+
+    stats.total += 1;
+
+    if (task.is_completed) {
+      stats.completed += 1;
+    }
+  }
+
+  const result: Record<string, number> = {};
+
+  for (const [planId, stats] of planStats) {
+    result[planId] = stats.total === 0 ? 0 : Math.round((stats.completed / stats.total) * 100);
+  }
+
+  return result;
 }
 
 async function ensurePlanBelongsToUser(

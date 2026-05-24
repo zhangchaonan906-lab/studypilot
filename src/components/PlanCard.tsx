@@ -11,9 +11,12 @@ export type PlanCardData = {
   daily_minutes: number;
   status?: string | null;
   overview?: string | null;
+  completionRate?: number;
 };
 
 export function PlanCard({ plan }: { plan: PlanCardData }) {
+  const completionRate = plan.completionRate ?? 0;
+
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-soft">
       <Link href={`/plans/${plan.id}`} className="block">
@@ -30,9 +33,9 @@ export function PlanCard({ plan }: { plan: PlanCardData }) {
         <div className="mt-4">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span>当前进度</span>
-            <span>打开查看安排</span>
+            <span>{completionRate}%</span>
           </div>
-          <ProgressBar value={20} className="mt-2" />
+          <ProgressBar value={completionRate} className="mt-2" />
         </div>
         <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
           <Badge tone="slate">截止 {plan.deadline}</Badge>

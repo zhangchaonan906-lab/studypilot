@@ -124,7 +124,10 @@ export default async function DashboardPage({
               </div>
               <div className="grid gap-4 lg:grid-cols-2">
                 {dashboard.activePlans.map((plan) => (
-                  <PlanCard key={plan.id} plan={plan} />
+                  <PlanCard
+                    key={plan.id}
+                    plan={{ ...plan, completionRate: dashboard.planCompletions[plan.id] ?? 0 }}
+                  />
                 ))}
               </div>
             </div>

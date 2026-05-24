@@ -166,6 +166,7 @@ export type DashboardData = {
   latestReflection: DailyReflection | null;
   mistakeCount: number;
   todayTasks: TodayTask[];
+  planCompletions: Record<string, number>;
 };
 
 export type WeeklyPageData = {
