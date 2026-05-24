@@ -14,6 +14,12 @@ import {
 } from "./data";
 import { PLAN_DELETE_FORBIDDEN_ERROR } from "./plan-deletion";
 import {
+  TASK_CREATE_ERROR,
+  TASK_DELETE_ERROR,
+  TASK_NOT_FOUND_ERROR,
+  TASK_UPDATE_ERROR,
+} from "./task-management";
+import {
   parseCreatePlanFormData,
   parseDailyReflectionFormData,
   parseMistakeReviewFormData,
@@ -39,9 +45,9 @@ export async function createPlanAction(
   try {
     const plan = await createPlan(parsed.data);
     planId = plan.id;
-  } catch (error) {
+  } catch {
     return {
-      error: error instanceof Error ? error.message : "创建学习计划失败，请稍后重试。",
+      error: "创建学习计划失败，请稍后重试。",
     };
   }
 
@@ -78,9 +84,13 @@ export async function updateTaskAction(
 
     return { success: "任务已更新。" };
   } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "任务更新失败，请稍后重试。",
-    };
+    const message = error instanceof Error ? error.message : "";
+
+    if (message === TASK_UPDATE_ERROR || message === TASK_NOT_FOUND_ERROR) {
+      return { error: message };
+    }
+
+    return { error: "任务更新失败，请稍后重试。" };
   }
 }
 
@@ -101,9 +111,13 @@ export async function createTaskAction(
 
     return { success: "任务已创建。" };
   } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "任务创建失败，请稍后重试。",
-    };
+    const message = error instanceof Error ? error.message : "";
+
+    if (message === TASK_CREATE_ERROR) {
+      return { error: message };
+    }
+
+    return { error: "任务创建失败，请稍后重试。" };
   }
 }
 
@@ -116,9 +130,13 @@ export async function deleteTaskAction(taskId: string, planId: string) {
 
     return { success: "任务已删除。" };
   } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "任务删除失败，请稍后重试。",
-    };
+    const message = error instanceof Error ? error.message : "";
+
+    if (message === TASK_DELETE_ERROR || message === TASK_NOT_FOUND_ERROR) {
+      return { error: message };
+    }
+
+    return { error: "任务删除失败，请稍后重试。" };
   }
 }
 

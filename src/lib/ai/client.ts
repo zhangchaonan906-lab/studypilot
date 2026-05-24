@@ -18,6 +18,19 @@ export type AIClientConfig = {
   baseUrl: string;
 };
 
+const ALLOWED_DEEPSEEK_MODELS = new Set([
+  "deepseek-v4-flash",
+  "deepseek-v4-pro",
+  "deepseek-chat",
+  "deepseek-reasoner",
+]);
+
+const ALLOWED_OPENAI_MODELS = new Set([
+  "gpt-4o-mini",
+  "gpt-4o",
+  "gpt-4-turbo",
+]);
+
 export function getAIClientConfig(env: EnvLike = process.env): AIClientConfig {
   const provider = (env.AI_PROVIDER || "deepseek").toLowerCase();
 
@@ -28,10 +41,16 @@ export function getAIClientConfig(env: EnvLike = process.env): AIClientConfig {
       throw new Error("缺少 OPENAI_API_KEY，请先在 .env.local 中填写。");
     }
 
+    const model = env.OPENAI_MODEL || "gpt-4o-mini";
+
+    if (!ALLOWED_OPENAI_MODELS.has(model)) {
+      throw new Error("AI 模型配置无效，请检查服务端配置。");
+    }
+
     return {
       provider: "openai",
       apiKey,
-      model: env.OPENAI_MODEL || "gpt-4o-mini",
+      model,
       baseUrl: "https://api.openai.com/v1",
     };
   }
@@ -43,10 +62,16 @@ export function getAIClientConfig(env: EnvLike = process.env): AIClientConfig {
       throw new Error("缺少 DEEPSEEK_API_KEY，请先在 .env.local 中填写。");
     }
 
+    const model = env.DEEPSEEK_MODEL || "deepseek-v4-flash";
+
+    if (!ALLOWED_DEEPSEEK_MODELS.has(model)) {
+      throw new Error("AI 模型配置无效，请检查服务端配置。");
+    }
+
     return {
       provider: "deepseek",
       apiKey,
-      model: env.DEEPSEEK_MODEL || "deepseek-v4-flash",
+      model,
       baseUrl: env.DEEPSEEK_BASE_URL || "https://api.deepseek.com",
     };
   }
@@ -78,11 +103,11 @@ export async function callAIJson(messages: ChatMessage[], options: AIRequestOpti
   const body = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const providerMessage =
-      typeof body?.error?.message === "string"
-        ? body.error.message
-        : `${config.provider} 请求失败，状态码 ${response.status}`;
-    throw new Error(`AI 调用失败：${providerMessage}`);
+    console.error(
+      `[StudyPilot] AI call failed: ${config.provider} status=${response.status}`,
+      typeof body?.error?.message === "string" ? body.error.message : "",
+    );
+    throw new Error("AI 服务暂时不可用，请稍后重试。");
   }
 
   const content = body?.choices?.[0]?.message?.content;

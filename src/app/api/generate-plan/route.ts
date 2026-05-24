@@ -4,6 +4,8 @@ import { validateGeneratePlanRequest } from "@/lib/ai/schemas";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const AI_USAGE_ENDPOINT = "/api/generate-plan";
+const DAILY_LIMIT = 5;
+const PER_MINUTE_LIMIT = 2;
 
 export const runtime = "nodejs";
 
@@ -18,6 +20,48 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "请先登录后再生成学习计划。" }, { status: 401 });
   }
 
+  // --- Rate limiting ---
+  const now = new Date();
+  const todayStart = now.toISOString().slice(0, 10) + "T00:00:00Z";
+  const oneMinuteAgo = new Date(now.getTime() - 60_000).toISOString();
+
+  const [dailyResult, recentResult] = await Promise.all([
+    supabase
+      .from("ai_usage_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("endpoint", AI_USAGE_ENDPOINT)
+      .gte("created_at", todayStart),
+    supabase
+      .from("ai_usage_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("endpoint", AI_USAGE_ENDPOINT)
+      .gte("created_at", oneMinuteAgo),
+  ]);
+
+  if (dailyResult.error || recentResult.error) {
+    return NextResponse.json(
+      { error: "请求失败，请稍后重试。" },
+      { status: 500 },
+    );
+  }
+
+  if ((dailyResult.count ?? 0) >= DAILY_LIMIT) {
+    return NextResponse.json(
+      { error: "今日生成次数已达上限，请明天再试。" },
+      { status: 429 },
+    );
+  }
+
+  if ((recentResult.count ?? 0) >= PER_MINUTE_LIMIT) {
+    return NextResponse.json(
+      { error: "请求过于频繁，请稍后再试。" },
+      { status: 429 },
+    );
+  }
+
+  // --- Request parsing ---
   let body: unknown;
 
   try {
@@ -34,20 +78,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsedInput.error }, { status: 400 });
   }
 
+  // --- Active plan count check ---
   let activePlanCount = 0;
 
   try {
     activePlanCount = await countActivePlans(supabase, user.id);
   } catch (error) {
+    console.error("[StudyPilot] countActivePlans failed:", error);
     await recordAiUsageLog(supabase, user.id, false);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "检查进行中计划数量失败。",
-      },
-      { status: 500 }
+      { error: "请求失败，请稍后重试。" },
+      { status: 500 },
     );
   }
 
@@ -55,10 +96,11 @@ export async function POST(request: Request) {
     await recordAiUsageLog(supabase, user.id, false);
     return NextResponse.json(
       { error: "每个用户最多同时拥有 3 个进行中的学习计划。" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
+  // --- Plan generation ---
   let createdPlanId: string | null = null;
 
   try {
@@ -81,7 +123,8 @@ export async function POST(request: Request) {
       .single();
 
     if (planError || !plan) {
-      throw new Error(planError?.message || "创建学习计划失败。");
+      console.error("[StudyPilot] plan insert failed:", planError);
+      throw new Error("创建学习计划失败。");
     }
 
     createdPlanId = plan.id;
@@ -102,7 +145,8 @@ export async function POST(request: Request) {
       .select("id, day_index");
 
     if (planDaysError || !planDays) {
-      throw new Error(planDaysError?.message || "保存每日安排失败。");
+      console.error("[StudyPilot] plan_days insert failed:", planDaysError);
+      throw new Error("保存每日安排失败。");
     }
 
     const planDayIdByIndex = new Map<number, string>(
@@ -113,7 +157,7 @@ export async function POST(request: Request) {
       const planDayId = planDayIdByIndex.get(day.dayIndex);
 
       if (!planDayId) {
-        throw new Error(`保存第 ${day.dayIndex} 天任务失败。`);
+        throw new Error("保存任务失败。");
       }
 
       return day.tasks.map((task) => ({
@@ -130,7 +174,8 @@ export async function POST(request: Request) {
       const { error: tasksError } = await supabase.from("tasks").insert(taskRows);
 
       if (tasksError) {
-        throw new Error(tasksError.message || "保存任务失败。");
+        console.error("[StudyPilot] tasks insert failed:", tasksError);
+        throw new Error("保存任务失败。");
       }
     }
 
@@ -138,7 +183,7 @@ export async function POST(request: Request) {
       const planDayId = planDayIdByIndex.get(day.dayIndex);
 
       if (!planDayId) {
-        throw new Error(`保存第 ${day.dayIndex} 天资源失败。`);
+        throw new Error("保存学习资源失败。");
       }
 
       return day.resources.map((resource) => ({
@@ -155,13 +200,16 @@ export async function POST(request: Request) {
       const { error: resourcesError } = await supabase.from("resources").insert(resourceRows);
 
       if (resourcesError) {
-        throw new Error(resourcesError.message || "保存学习资源失败。");
+        console.error("[StudyPilot] resources insert failed:", resourcesError);
+        throw new Error("保存学习资源失败。");
       }
     }
 
     await recordAiUsageLog(supabase, user.id, true);
     return NextResponse.json({ planId: createdPlanId });
   } catch (error) {
+    console.error("[StudyPilot] generate-plan failed:", error);
+
     if (createdPlanId) {
       await supabase
         .from("plans")
@@ -173,20 +221,15 @@ export async function POST(request: Request) {
     await recordAiUsageLog(supabase, user.id, false);
 
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "生成学习计划失败，请稍后重试。",
-      },
-      { status: 500 }
+      { error: "生成学习计划失败，请稍后重试。" },
+      { status: 500 },
     );
   }
 }
 
 async function countActivePlans(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  userId: string
+  userId: string,
 ) {
   const { count, error } = await supabase
     .from("plans")
@@ -204,7 +247,7 @@ async function countActivePlans(
 async function recordAiUsageLog(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   userId: string,
-  success: boolean
+  success: boolean,
 ) {
   await supabase.from("ai_usage_logs").insert({
     user_id: userId,

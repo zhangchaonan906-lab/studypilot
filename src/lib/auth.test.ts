@@ -9,6 +9,7 @@ import {
 describe("auth route rules", () => {
   it("protects all application routes except public pages", () => {
     expect(isProtectedPath("/dashboard")).toBe(true);
+    expect(isProtectedPath("/plans")).toBe(true);
     expect(isProtectedPath("/plans/new")).toBe(true);
     expect(isProtectedPath("/plans/gaoshu-30")).toBe(true);
     expect(isProtectedPath("/today")).toBe(true);
@@ -16,6 +17,7 @@ describe("auth route rules", () => {
     expect(isProtectedPath("/weekly")).toBe(true);
     expect(isProtectedPath("/")).toBe(false);
     expect(isProtectedPath("/login")).toBe(false);
+    expect(isProtectedPath("/_next/static/script.js")).toBe(false);
   });
 
   it("redirects logged-out users to login and logged-in users away from login", () => {
