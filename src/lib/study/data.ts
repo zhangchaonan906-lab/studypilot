@@ -16,6 +16,10 @@ import {
   updateTaskForUser,
 } from "./task-management";
 import { updateTaskCompletionForUser } from "./task-completion";
+import {
+  buildTodayStudyOverview,
+  type TodayStudyOverview,
+} from "./today-overview";
 import type {
   DashboardData,
   DailyReflection,
@@ -29,7 +33,6 @@ import type {
   Resource,
   ReviewPageData,
   Task,
-  TodayStudyDay,
   TodayTask,
   WeeklyPageData,
   WeeklySummary,
@@ -287,81 +290,87 @@ export async function listTodayTasks(date = getLocalDateString()) {
     .filter(Boolean) as TodayTask[];
 }
 
-export async function getTodayStudyDay(
+export async function getTodayStudyOverview(
   date = getLocalDateString()
-): Promise<TodayStudyDay | null> {
+): Promise<TodayStudyOverview | null> {
   const { supabase, userId } = await getAuthenticatedContext();
-  const plan = await getCurrentActivePlanForUser(supabase, userId);
+  const { data: plansData, error: plansError } = await supabase
+    .from("plans")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
 
-  if (!plan) {
+  throwIfError(plansError, "读取进行中的学习计划失败");
+
+  const activePlans = (plansData ?? []) as Plan[];
+
+  if (activePlans.length === 0) {
     return null;
   }
 
-  const [dayResult, reflectionResult] = await Promise.all([
+  const planIds = activePlans.map((plan) => plan.id);
+  const [daysResult, reflectionResult] = await Promise.all([
     supabase
       .from("plan_days")
       .select("*")
       .eq("user_id", userId)
-      .eq("plan_id", plan.id)
       .eq("date", date)
-      .order("day_index", { ascending: true })
-      .limit(1),
+      .in("plan_id", planIds)
+      .order("day_index", { ascending: true }),
     supabase
       .from("daily_reflections")
       .select("*")
       .eq("user_id", userId)
-      .eq("plan_id", plan.id)
       .eq("date", date)
+      .in("plan_id", planIds)
       .order("created_at", { ascending: false })
       .limit(1),
   ]);
 
-  throwIfError(dayResult.error, "读取今日安排失败");
+  throwIfError(daysResult.error, "读取今日安排失败");
   throwIfError(reflectionResult.error, "读取今日复盘失败");
 
-  const planDay = ((dayResult.data ?? []) as PlanDay[])[0] ?? null;
-  const reflection = ((reflectionResult.data ?? []) as DailyReflection[])[0] ?? null;
+  const planDays = (daysResult.data ?? []) as PlanDay[];
+  const dayIds = planDays.map((day) => day.id);
+  let tasks: Task[] = [];
+  let resources: Resource[] = [];
 
-  if (!planDay) {
-    return {
-      plan,
-      day: null,
-      reflection,
-      completion: calculateCompletionRate([]),
-    };
+  if (dayIds.length > 0) {
+    const [tasksResult, resourcesResult] = await Promise.all([
+      supabase
+        .from("tasks")
+        .select("*")
+        .eq("user_id", userId)
+        .in("plan_day_id", dayIds)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("resources")
+        .select("*")
+        .eq("user_id", userId)
+        .in("plan_day_id", dayIds)
+        .order("created_at", { ascending: true }),
+    ]);
+
+    throwIfError(tasksResult.error, "读取今日任务失败");
+    throwIfError(resourcesResult.error, "读取今日资料失败");
+
+    tasks = (tasksResult.data ?? []) as Task[];
+    resources = (resourcesResult.data ?? []) as Resource[];
   }
 
-  const [tasksResult, resourcesResult] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("plan_day_id", planDay.id)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("resources")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("plan_day_id", planDay.id)
-      .order("created_at", { ascending: true }),
-  ]);
+  return buildTodayStudyOverview({
+    userId,
+    activePlans,
+    planDays,
+    tasks,
+    resources,
+    reflections: (reflectionResult.data ?? []) as DailyReflection[],
+  });
+}
 
-  throwIfError(tasksResult.error, "读取今日任务失败");
-  throwIfError(resourcesResult.error, "读取今日资料失败");
-
-  const tasks = (tasksResult.data ?? []) as Task[];
-  const resources = (resourcesResult.data ?? []) as Resource[];
-
-  return {
-    plan,
-    day: {
-      ...planDay,
-      tasks,
-      resources,
-    },
-    reflection,
-    completion: calculateCompletionRate(tasks),
-  };
+export async function getTodayStudyDay(date = getLocalDateString()) {
+  return getTodayStudyOverview(date);
 }
 
 export async function updateTaskCompletion(taskId: string, isCompleted: boolean) {
