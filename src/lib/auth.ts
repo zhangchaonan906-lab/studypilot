@@ -10,6 +10,7 @@ export const protectedPathPrefixes = [
   "/marketplace",
   "/schedule",
   "/checkin",
+  "/notes",
 ];
 
 export function isProtectedPath(pathname: string) {

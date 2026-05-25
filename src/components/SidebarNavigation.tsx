@@ -24,6 +24,7 @@ const studyToolLinks = [
   { href: "/weekly", icon: "📊", label: "周总结" },
   { href: "/focus", icon: "⏱️", label: "深度学习计时" },
   { href: "/checkin", icon: "🐾", label: "猫爪打卡" },
+  { href: "/notes", icon: "📝", label: "学习笔记" },
   { href: "/resources", icon: "🌐", label: "资料资源" },
 ];
 

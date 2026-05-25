@@ -39,6 +39,7 @@ describe("sidebar navigation shell", () => {
     expect(source).toContain("周总结");
     expect(source).toContain("深度学习计时");
     expect(source).toContain("猫爪打卡");
+    expect(source).toContain("学习笔记");
     expect(source).toContain("资料资源");
     expect(source).toContain("计划模板");
     expect(source).toContain("计划市集");
@@ -64,12 +65,14 @@ describe("sidebar navigation shell", () => {
     expect(isProtectedPath("/marketplace")).toBe(true);
     expect(isProtectedPath("/schedule")).toBe(true);
     expect(isProtectedPath("/checkin")).toBe(true);
+    expect(isProtectedPath("/notes")).toBe(true);
   });
 });
 
 describe("sidebar placeholder pages", () => {
   it.each([
     ["focus", "深度学习计时"],
+    ["notes", "学习笔记"],
     ["resources", "资料资源"],
     ["templates", "计划模板"],
     ["marketplace", "计划市集"],
