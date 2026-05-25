@@ -209,7 +209,11 @@ export async function POST(request: Request) {
     await recordAiUsageLog(supabase, user.id, true);
     return NextResponse.json({ planId: createdPlanId });
   } catch (error) {
-    console.error("[StudyPilot] generate-plan failed:", error);
+    console.error(
+      "[StudyPilot] generate-plan failed:",
+      error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+      createdPlanId ? "(after plan insert)" : "(before plan insert)"
+    );
 
     if (createdPlanId) {
       await supabase

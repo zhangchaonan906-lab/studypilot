@@ -358,10 +358,10 @@ export function validateGeneratedPlan(
       };
     }
 
-    if (totalMinutes > options.dailyMinutes) {
+    if (totalMinutes > options.dailyMinutes * 1.25) {
       return {
         ok: false,
-        error: `AI 返回的第 ${day.dayIndex} 天任务总时长超过每天可学习时间。`,
+        error: `AI 返回的第 ${day.dayIndex} 天任务总时长明显超过每天可学习时间。`,
       };
     }
 

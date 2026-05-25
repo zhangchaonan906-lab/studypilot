@@ -302,7 +302,40 @@ describe("generated plan schema", () => {
     expect(generatedPlanSchema.safeParse(invalid).success).toBe(false);
   });
 
-  it("rejects task totals that exceed daily minutes", () => {
+  it("allows task totals within 25% of daily minutes", () => {
+    const result = validateGeneratedPlan(
+      generatedPlanSchema.parse({
+        ...generatedPlan,
+        days: [
+          {
+            ...generatedPlan.days[0],
+            tasks: [
+              {
+                content: "完成 8 道极限计算题并标记错因",
+                priority: "must",
+                estimatedMinutes: 45,
+              },
+              {
+                content: "整理 3 条等价无穷小使用条件",
+                priority: "should",
+                estimatedMinutes: 30,
+              },
+            ],
+          },
+        ],
+      }),
+      {
+        startDate: "2026-05-23",
+        deadline: "2026-05-30",
+        dailyMinutes: 60,
+        maxDays: 7,
+      }
+    );
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects task totals that significantly exceed daily minutes", () => {
     const result = validateGeneratedPlan(
       generatedPlanSchema.parse({
         ...generatedPlan,
@@ -329,7 +362,7 @@ describe("generated plan schema", () => {
     );
 
     expect(result.ok).toBe(false);
-    expect(result.error).toContain("超过每天可学习时间");
+    expect(result.error).toContain("明显超过每天可学习时间");
   });
 
   it("does not reject resources on non-resource days after normalization", () => {
