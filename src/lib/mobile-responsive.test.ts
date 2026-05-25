@@ -39,6 +39,26 @@ describe("mobile responsive shell", () => {
 });
 
 describe("mobile responsive page surfaces", () => {
+  it("keeps landing page readable at every breakpoint with no horizontal overflow", () => {
+    const source = readSource("src", "app", "page.tsx");
+
+    // Hero breaks into single column on mobile
+    expect(source).toContain("lg:grid-cols-[minmax(0,1fr)_380px]");
+    // Capability cards go single column on mobile
+    expect(source).toContain("sm:grid-cols-2 lg:grid-cols-3");
+    // Loop steps go single column on mobile
+    expect(source).toContain("sm:grid-cols-2 lg:grid-cols-4");
+    // Preview card hidden on desktop, shown on mobile
+    expect(source).toContain("hidden lg:block");
+    expect(source).toContain("lg:hidden");
+    // No horizontal scroll
+    expect(source).not.toContain("overflow-x-scroll");
+    // Welcome card CTA is full-width
+    expect(source).toContain("w-full text-center");
+    // Paw print decoration present
+    expect(source).toContain("🐾");
+  });
+
   it("keeps /login compact with dynamic viewport spacing", () => {
     const source = readSource("src", "app", "login", "page.tsx");
 
