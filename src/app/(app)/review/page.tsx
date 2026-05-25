@@ -24,7 +24,7 @@ export default async function ReviewPage({
         description="轻量记录错题、错因和下一步行动，让复习不只停留在“看过一遍”。"
       />
 
-      <section className="grid gap-5 xl:grid-cols-[1fr_380px]">
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-4">
           {params.created ? <SuccessMessage>错题已保存。</SuccessMessage> : null}
 

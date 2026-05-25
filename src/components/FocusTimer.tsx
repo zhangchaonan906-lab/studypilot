@@ -215,7 +215,7 @@ export function FocusTimer({
   const timerActive = isRunning || isPaused || showCompletion;
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto w-full max-w-2xl">
       <div className="sp-card">
         <label htmlFor="focus-goal" className="sp-label">
           本次学习目标
@@ -281,7 +281,7 @@ export function FocusTimer({
 
       <div className="mt-6 flex flex-col items-center">
         <div
-          className={`flex flex-col items-center justify-center rounded-3xl border-2 px-10 py-10 sm:px-16 sm:py-14 ${
+          className={`flex w-full flex-col items-center justify-center rounded-3xl border-2 px-4 py-8 sm:w-auto sm:px-16 sm:py-14 ${
             isRunning
               ? "border-primary/30 bg-indigo-50/60"
               : showCompletion
@@ -290,7 +290,7 @@ export function FocusTimer({
           }`}
         >
           <p
-            className={`font-mono text-7xl font-bold tracking-tight sm:text-8xl ${
+            className={`font-mono text-5xl sm:text-7xl lg:text-8xl font-bold tracking-tight ${
               showCompletion ? "text-emerald-600" : "text-ink"
             }`}
             aria-live="polite"
@@ -309,13 +309,13 @@ export function FocusTimer({
           </p>
         ) : null}
 
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-6 flex w-full flex-wrap items-center justify-center gap-3">
           {!isRunning && !isPaused ? (
             <button
               type="button"
               onClick={handleStart}
               disabled={!canStart}
-              className="btn-primary min-w-[140px]"
+              className="btn-primary w-full sm:w-auto min-w-[140px]"
             >
               开始计时
             </button>
@@ -325,7 +325,7 @@ export function FocusTimer({
             <button
               type="button"
               onClick={handlePause}
-              className="btn-secondary min-w-[140px]"
+              className="btn-secondary w-full sm:w-auto min-w-[140px]"
             >
               暂停
             </button>
@@ -336,14 +336,14 @@ export function FocusTimer({
               <button
                 type="button"
                 onClick={handleResume}
-                className="btn-primary min-w-[120px]"
+                className="btn-primary w-full sm:w-auto min-w-[120px]"
               >
                 继续
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="btn-secondary min-w-[120px]"
+                className="btn-secondary w-full sm:w-auto min-w-[120px]"
               >
                 重置
               </button>
@@ -354,7 +354,7 @@ export function FocusTimer({
             <button
               type="button"
               onClick={handleReset}
-              className="btn-secondary min-w-[120px]"
+              className="btn-secondary w-full sm:w-auto min-w-[120px]"
             >
               重置
             </button>

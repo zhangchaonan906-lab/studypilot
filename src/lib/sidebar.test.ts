@@ -16,8 +16,11 @@ describe("sidebar navigation shell", () => {
       "utf8"
     );
 
-    expect(appShellSource).toContain("h-screen overflow-hidden");
-    expect(appShellSource).toContain("flex-1 overflow-y-auto");
+    expect(appShellSource).toContain("min-h-dvh");
+    expect(appShellSource).toContain("data-app-main");
+    expect(appShellSource).toContain("pt-[calc(var(--mobile-header-height)+1rem)]");
+    expect(appShellSource).toContain("pb-[calc(env(safe-area-inset-bottom)+1.5rem)]");
+    expect(appShellSource).toContain("lg:overflow-y-auto");
     expect(appLayoutSource).toContain('dynamic = "force-dynamic"');
   });
 

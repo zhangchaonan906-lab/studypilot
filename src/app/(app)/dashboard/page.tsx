@@ -111,7 +111,7 @@ export default async function DashboardPage({
             ))}
           </section>
 
-          <section className="grid gap-5 xl:grid-cols-[1fr_360px]">
+          <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="space-y-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>

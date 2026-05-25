@@ -65,7 +65,7 @@ export default async function WeeklyPage() {
           />
         </section>
       ) : (
-        <section className="mt-6 grid gap-5 xl:grid-cols-[380px_1fr]">
+        <section className="mt-6 grid gap-5 xl:grid-cols-[380px_minmax(0,1fr)]">
           <aside className="sp-card h-fit">
             <Badge tone="blue">第 {currentWeek.weekIndex} 周</Badge>
             <h2 className="mt-3 text-xl font-bold text-ink">生成本周总结</h2>

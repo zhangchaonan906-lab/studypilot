@@ -70,9 +70,9 @@ export function TimetableClient({ initialEntries }: { initialEntries: TimetableE
 
   return (
     <section className="mt-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-bold text-ink">本周课程</h2>
-        <button type="button" onClick={openAdd} className="btn-primary text-sm">
+        <button type="button" onClick={openAdd} className="btn-primary w-full text-sm sm:w-auto">
           + 添加课程
         </button>
       </div>
@@ -151,7 +151,7 @@ export function TimetableClient({ initialEntries }: { initialEntries: TimetableE
           if (e.target === dialogRef.current) closeForm();
         }}
       >
-        <div className="w-[min(32rem,90vw)] p-6">
+        <div className="max-h-[min(80dvh,42rem)] w-[min(32rem,90vw)] overflow-y-auto p-4 sm:p-6">
           {formMode.type !== "closed" ? (
             <TimetableForm mode={formMode} onClose={closeForm} onSuccess={() => router.refresh()} />
           ) : null}
@@ -331,7 +331,7 @@ function TimetableForm({
           </select>
         </label>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
             <span className="text-sm font-semibold text-ink">开始时间 *</span>
             <input
@@ -409,7 +409,7 @@ function TimetableForm({
           </p>
         ) : null}
 
-        <div className="flex items-center gap-3 pt-2">
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
           <button type="submit" disabled={isPending} className="btn-primary flex-1 text-sm">
             {isPending ? "保存中..." : isEdit ? "保存修改" : "添加课程"}
           </button>

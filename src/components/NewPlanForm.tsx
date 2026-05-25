@@ -144,7 +144,7 @@ export function NewPlanForm() {
 
   return (
     <section className="sp-card">
-      <form onSubmit={handleSubmit} className="grid gap-6">
+      <form onSubmit={handleSubmit} className="grid gap-4 sm:gap-6">
         <label className="block">
           <span className="sp-label">计划标题</span>
           <input
@@ -168,7 +168,7 @@ export function NewPlanForm() {
           <p className="sp-help">目标越具体，AI 拆出来的每日任务越稳。</p>
         </label>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <label className="block">
             <span className="sp-label">当前水平</span>
             <select
@@ -264,7 +264,7 @@ export function NewPlanForm() {
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="sp-label">每周休息天数</span>
             <input

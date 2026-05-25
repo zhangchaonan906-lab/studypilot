@@ -105,22 +105,22 @@ export function CheckinClient({
   }, [month]);
 
   return (
-    <section className="mt-6 space-y-6">
+    <section className="mt-4 space-y-4 sm:mt-6 sm:space-y-6">
       {/* Stats cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="sp-card text-center">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div data-checkin-stat-card className="sp-card text-center">
           <p className="text-xs font-semibold text-slate-500">本月打卡</p>
-          <p className="mt-1 text-3xl font-bold text-ink">{stats.monthTotal}</p>
+          <p className="mt-1 text-2xl sm:text-3xl font-bold text-ink">{stats.monthTotal}</p>
           <p className="mt-0.5 text-xs text-slate-400">天</p>
         </div>
-        <div className="sp-card text-center">
+        <div data-checkin-stat-card className="sp-card text-center">
           <p className="text-xs font-semibold text-slate-500">连续打卡</p>
-          <p className="mt-1 text-3xl font-bold text-ink">{stats.streak}</p>
+          <p className="mt-1 text-2xl sm:text-3xl font-bold text-ink">{stats.streak}</p>
           <p className="mt-0.5 text-xs text-slate-400">天</p>
         </div>
-        <div className="sp-card text-center">
+        <div data-checkin-stat-card className="sp-card text-center">
           <p className="text-xs font-semibold text-slate-500">今日状态</p>
-          <p className="mt-1 text-3xl font-bold text-ink">
+          <p className="mt-1 text-2xl sm:text-3xl font-bold text-ink">
             {stats.todayCheckedIn ? "🐾" : "—"}
           </p>
           <p className="mt-0.5 text-xs text-slate-400">
@@ -131,8 +131,8 @@ export function CheckinClient({
 
       {/* Checkin action */}
       <div className="sp-card">
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-          <div>
+        <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <p className="font-bold text-ink">
               {stats.todayCheckedIn ? "今天已留下猫爪 🐾" : "今天还没打卡"}
             </p>
@@ -144,11 +144,11 @@ export function CheckinClient({
           </div>
           <div className="flex items-center gap-3">
             {stats.todayCheckedIn ? (
-              <button type="button" onClick={handleCancel} className="btn-secondary text-sm">
+               <button type="button" onClick={handleCancel} className="btn-secondary w-full sm:w-auto text-sm">
                 取消今日打卡
               </button>
             ) : (
-              <button type="button" onClick={handleCheckin} className="btn-primary text-lg px-8">
+               <button type="button" onClick={handleCheckin} className="btn-primary w-full sm:w-auto px-6 text-base sm:px-8 sm:text-lg">
                 🐾 今日打卡
               </button>
             )}
@@ -169,7 +169,7 @@ export function CheckinClient({
 
       {/* Calendar */}
       <div className="sp-card">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={goToPrevMonth}
@@ -177,7 +177,7 @@ export function CheckinClient({
           >
             ← 上月
           </button>
-          <h3 className="text-lg font-bold text-ink">
+          <h3 className="text-base font-bold text-ink sm:text-lg">
             {year} 年 {month} 月
           </h3>
           <button
@@ -212,7 +212,7 @@ export function CheckinClient({
             return (
               <div
                 key={day.date}
-                className={`aspect-square flex flex-col items-center justify-center rounded-xl text-sm transition ${
+                 className={`flex aspect-square flex-col items-center justify-center rounded-lg sm:rounded-xl text-xs transition sm:text-sm ${
                   isToday
                     ? "bg-primary text-white font-bold shadow-sm"
                     : isCheckedIn

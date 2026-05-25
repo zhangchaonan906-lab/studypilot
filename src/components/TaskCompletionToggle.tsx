@@ -83,7 +83,7 @@ export function TaskCompletionToggle({
           <span
             className={`block font-bold ${
               isCompleted ? "text-slate-400 line-through" : "text-ink"
-            }`}
+            } break-words`}
           >
             {content}
           </span>
@@ -102,7 +102,7 @@ export function TaskCompletionToggle({
       {!isCompleted ? (
         <Link
           href={`/focus?goal=${encodeURIComponent(content)}${estimatedMinutes && estimatedMinutes > 0 ? `&minutes=${estimatedMinutes}` : ""}`}
-          className="ml-10 inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary transition hover:border-primary hover:bg-indigo-50"
+          className="mt-3 inline-flex w-full justify-center sm:w-fit items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary transition hover:border-primary hover:bg-indigo-50 sm:ml-10"
         >
           <span aria-hidden="true">⏱</span>
           开始专注

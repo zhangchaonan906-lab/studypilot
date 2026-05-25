@@ -50,24 +50,26 @@ export function SidebarNavigation({ plans, userEmail }: SidebarNavigationProps) 
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-30 border-b border-slate-200/80 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
-        <div className="flex items-center justify-between gap-3">
+      <header className="fixed inset-x-0 top-0 z-30 h-[var(--mobile-header-height)] border-b border-slate-200/80 bg-white/95 px-3 backdrop-blur lg:hidden">
+        <div className="flex h-full items-center justify-between gap-2">
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-lg font-bold text-slate-700 shadow-sm"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-lg font-bold text-slate-700 shadow-sm"
             aria-label="打开导航菜单"
             aria-expanded={isOpen}
           >
             ☰
           </button>
           <Link href="/dashboard" className="flex min-w-0 items-center gap-2" onClick={closeMenu}>
-            <StudyPilotLogo size={36} />
-            <span className="truncate text-base font-bold text-ink">StudyPilot</span>
+            <StudyPilotLogo size={34} />
+            <span className="truncate text-base font-bold text-ink max-[360px]:hidden">
+              StudyPilot
+            </span>
           </Link>
           <Link
             href="/plans/new"
-            className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm"
+            className="shrink-0 rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm"
           >
             新建
           </Link>

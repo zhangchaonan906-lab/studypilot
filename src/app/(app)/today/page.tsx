@@ -82,7 +82,7 @@ export default async function TodayPage({
           </div>
         </div>
 
-        <section className="grid gap-5 xl:grid-cols-[1fr_360px]">
+        <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-4">
             {!hasAnyTodayTasks ? (
               <EmptyState

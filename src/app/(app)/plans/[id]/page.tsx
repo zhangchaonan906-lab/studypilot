@@ -109,7 +109,7 @@ export default async function PlanDetailPage({
                   <Badge tone="blue">{day.tasks.length} 项任务</Badge>
                 </div>
 
-                <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_320px]">
+                <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
                   <div>
                     <h4 className="text-sm font-bold text-ink">任务</h4>
                     {day.tasks.length === 0 ? (
