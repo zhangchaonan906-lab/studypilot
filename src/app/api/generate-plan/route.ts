@@ -8,6 +8,7 @@ const DAILY_LIMIT = 5;
 const PER_MINUTE_LIMIT = 2;
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
@@ -67,7 +68,8 @@ export async function POST(request: Request) {
 
   try {
     body = await request.json();
-  } catch {
+  } catch (error) {
+    logInvalidGeneratePlanJson(request, Boolean(user), error);
     await recordAiUsageLog(supabase, user.id, false);
     return NextResponse.json({ error: "请求内容不是有效 JSON。" }, { status: 400 });
   }
@@ -259,4 +261,42 @@ async function recordAiUsageLog(
     endpoint: AI_USAGE_ENDPOINT,
     success,
   });
+}
+
+function logInvalidGeneratePlanJson(
+  request: Request,
+  hasUser: boolean,
+  error: unknown,
+) {
+  console.error("[StudyPilot] generate-plan invalid JSON:", {
+    requestId: getRequestId(request),
+    host: request.headers.get("host") ?? null,
+    method: request.method,
+    contentType: request.headers.get("content-type"),
+    contentLength: request.headers.get("content-length"),
+    hasUser,
+    errorName: error instanceof Error ? error.name : "UnknownError",
+    safeErrorMessage: getSafeJsonParseErrorMessage(error),
+  });
+}
+
+function getRequestId(request: Request) {
+  return (
+    request.headers.get("x-request-id") ??
+    request.headers.get("x-vercel-id") ??
+    request.headers.get("x-nws-log-uuid") ??
+    globalThis.crypto.randomUUID()
+  );
+}
+
+function getSafeJsonParseErrorMessage(error: unknown) {
+  if (error instanceof SyntaxError) {
+    return "Invalid JSON body.";
+  }
+
+  if (error instanceof Error) {
+    return `${error.name} while reading JSON body.`;
+  }
+
+  return "Unknown error while reading JSON body.";
 }
