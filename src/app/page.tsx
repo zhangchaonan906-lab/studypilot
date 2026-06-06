@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { capabilityCards, learningLoopSteps, sceneTags } from "@/lib/site";
+import { IcpFooter } from "@/components/IcpFooter";
 import { StudyPilotLogo } from "@/components/StudyPilotLogo";
 
 export default function HomePage() {
@@ -146,6 +147,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <IcpFooter />
     </main>
   );
 }

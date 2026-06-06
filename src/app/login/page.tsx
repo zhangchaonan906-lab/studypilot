@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { IcpFooter } from "@/components/IcpFooter";
 import { LoginForm } from "@/components/LoginForm";
 import { StudyPilotLogo } from "@/components/StudyPilotLogo";
 
@@ -37,6 +38,7 @@ export default async function LoginPage({
           <LoginForm initialMessage={initialMessage} />
         </div>
       </div>
+      <IcpFooter className="mt-6" />
     </main>
   );
 }
