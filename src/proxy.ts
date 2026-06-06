@@ -1,57 +1,58 @@
-import { createServerClient } from "@supabase/ssr";
-import { NextRequest, NextResponse } from "next/server";
-import { getAuthRedirectPath, isProtectedPath } from "@/lib/auth";
+import { NextResponse, type NextRequest } from "next/server";
+import { isProtectedPath } from "./lib/auth";
 
-export async function proxy(request: NextRequest) {
+const publicRoutes = new Set(["/", "/login", "/auth/callback"]);
+
+function isPublicRoute(pathname: string) {
+  return publicRoutes.has(pathname);
+}
+
+function isStaticAssetPath(pathname: string) {
+  return (
+    pathname.startsWith("/_next/") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/icon.svg" ||
+    /\.(?:css|js|map|svg|png|jpg|jpeg|gif|webp|ico|txt|xml|json|woff|woff2)$/i.test(pathname)
+  );
+}
+
+function hasSupabaseAuthCookie(request: NextRequest) {
+  return request.cookies.getAll().some(({ name, value }) => {
+    if (!value) {
+      return false;
+    }
+
+    return (
+      (name.startsWith("sb-") && name.includes("auth-token")) ||
+      name === "supabase-auth-token" ||
+      name.includes("supabase-auth-token")
+    );
+  });
+}
+
+function createLoginRedirect(request: NextRequest) {
+  const redirectUrl = request.nextUrl.clone();
+  const nextPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+
+  redirectUrl.pathname = "/login";
+  redirectUrl.search = "";
+  redirectUrl.searchParams.set("next", nextPath);
+
+  return NextResponse.redirect(redirectUrl);
+}
+
+export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    const redirectPath = getAuthRedirectPath(pathname, false);
-    return redirectPath
-      ? NextResponse.redirect(new URL(redirectPath, request.url))
-      : NextResponse.next();
+  if (isPublicRoute(pathname) || isStaticAssetPath(pathname)) {
+    return NextResponse.next();
   }
 
-  let response = NextResponse.next({
-    request,
-  });
-
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-
-        response = NextResponse.next({
-          request,
-        });
-
-        cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
-        });
-      },
-    },
-  });
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const redirectPath = getAuthRedirectPath(pathname, Boolean(user));
-
-  if (redirectPath) {
-    return NextResponse.redirect(new URL(redirectPath, request.url));
+  if (isProtectedPath(pathname) && !hasSupabaseAuthCookie(request)) {
+    return createLoginRedirect(request);
   }
 
-  if (!user && isProtectedPath(pathname)) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
