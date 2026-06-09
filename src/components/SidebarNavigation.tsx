@@ -31,6 +31,7 @@ const studyToolLinks = [
 const exploreLinks = [
   { href: "/templates", icon: "🧩", label: "计划模板" },
   { href: "/marketplace", icon: "🌐", label: "计划市集" },
+  { href: "/a3", icon: "🏆", label: "软件杯 A3 演示" },
 ];
 
 function isActivePath(pathname: string, href: string) {

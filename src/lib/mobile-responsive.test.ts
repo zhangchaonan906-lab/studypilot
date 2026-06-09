@@ -136,3 +136,32 @@ describe("mobile responsive page surfaces", () => {
     );
   });
 });
+
+describe("dashboard A3 demo card", () => {
+  const dashboardSource = readSource("src", "app", "(app)", "dashboard", "page.tsx");
+
+  it("renders A3 competition demo card title", () => {
+    expect(dashboardSource).toContain("中国软件杯 A3 参赛版");
+  });
+
+  it("renders entry button linking to /a3", () => {
+    expect(dashboardSource).toContain("进入演示中心");
+    expect(dashboardSource).toContain('href="/a3"');
+  });
+
+  it("renders five capability tags", () => {
+    expect(dashboardSource).toContain("课程知识库");
+    expect(dashboardSource).toContain("学习画像");
+    expect(dashboardSource).toContain("资源生成");
+    expect(dashboardSource).toContain("效果评估");
+    expect(dashboardSource).toContain("系统保障");
+  });
+
+  it("avoids banned marketing phrases", () => {
+    expect(dashboardSource).not.toContain("赋能");
+    expect(dashboardSource).not.toContain("全方位提升");
+    expect(dashboardSource).not.toContain("数字化时代");
+    expect(dashboardSource).not.toContain("智能化变革");
+    expect(dashboardSource).not.toContain("显著增强学习效果");
+  });
+});

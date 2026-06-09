@@ -43,6 +43,9 @@ describe("sidebar navigation shell", () => {
     expect(source).toContain("资料资源");
     expect(source).toContain("计划模板");
     expect(source).toContain("计划市集");
+    expect(source).toContain("软件杯 A3 演示");
+    expect(source).toContain('href: "/a3"');
+    expect(source).toContain("🏆");
   });
 
   it("keeps sidebar fixed while preserving visible plan names", () => {

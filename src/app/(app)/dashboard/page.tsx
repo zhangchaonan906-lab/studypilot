@@ -198,6 +198,33 @@ export default async function DashboardPage({
               </div>
             </aside>
           </section>
+
+          <section className="sp-card mt-6">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <Badge tone="amber">演示</Badge>
+                <h2 className="mt-3 text-xl font-bold text-ink sm:text-2xl">
+                  中国软件杯 A3 参赛版
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                  查看 StudyPilot 面向 A3 赛题的演示中心，包括课程知识库、学习画像、资源生成、学习评估和系统保障说明。
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {["课程知识库", "学习画像", "资源生成", "效果评估", "系统保障"].map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <Link href="/a3" className="btn-primary shrink-0">
+                进入演示中心
+              </Link>
+            </div>
+          </section>
         </section>
       )}
     </>
