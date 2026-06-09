@@ -32,6 +32,7 @@ describe("/a3 demo center page", () => {
     expect(source).toContain('href="/a3/profile"');
     expect(source).toContain('href="/a3/resources"');
     expect(source).toContain('href="/a3/evaluation"');
+    expect(source).toContain('href="/a3/system"');
   });
 
   it("shows the demo flow, agent chain, and supported resource types", () => {

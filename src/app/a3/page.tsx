@@ -41,6 +41,14 @@ const moduleCards = [
     href: "/a3/evaluation",
     action: "查看评估",
   },
+  {
+    title: "系统保障与开发说明",
+    requirement: "防幻觉、内容安全、AI Coding 工具使用说明、测试与部署说明",
+    description:
+      "集中说明内容可靠性、安全边界、多智能体进度机制、开源工具、测试命令和部署方式。",
+    href: "/a3/system",
+    action: "查看说明",
+  },
 ];
 
 const demoSteps = [
@@ -134,6 +142,10 @@ const ctaLinks = [
     label: "查看学习评估",
     href: "/a3/evaluation",
   },
+  {
+    label: "系统保障说明",
+    href: "/a3/system",
+  },
 ];
 
 export default function A3DemoCenterPage() {
@@ -156,6 +168,9 @@ export default function A3DemoCenterPage() {
             </Link>
             <Link href="/a3/evaluation" className="btn-secondary px-3 py-2 text-sm">
               学习评估
+            </Link>
+            <Link href="/a3/system" className="btn-secondary px-3 py-2 text-sm">
+              系统说明
             </Link>
           </div>
         </div>
@@ -191,7 +206,7 @@ export default function A3DemoCenterPage() {
             <h2 className="sp-section-title">演示重点</h2>
             <div className="mt-4 grid gap-3">
               <HeroMetric label="课程" value="数据结构" />
-              <HeroMetric label="演示模块" value="4 个" />
+              <HeroMetric label="演示模块" value="5 个" />
               <HeroMetric label="资源类型" value="5 类" />
               <HeroMetric label="实现方式" value="本地规则版原型" />
             </div>
